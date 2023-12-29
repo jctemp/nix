@@ -100,6 +100,27 @@
         alejandra
         statix
       ];
+      shellHook = ''
+        GREEN="\033[0;32m"
+        NC="\033[0m"
+        BOLD="\033[1m"
+
+        echo -e "''${GREEN}NixOS Configuration''${NC}"
+        echo -e ""
+        echo -e "''${BOLD}check''${NC}"
+        echo -e "  - Formats all nix files"
+        echo -e "  - Checks the flake"
+        echo -e ""
+        echo -e "''${BOLD}update''${NC}"
+        echo -e "  - Formats all nix files"
+        echo -e "  - Updates the lock file"
+        echo -e ""
+        echo -e "''${BOLD}upgrade''${NC}"
+        echo -e "  - Formats all nix files"
+        echo -e "  - Updates the lock file"
+        echo -e "  - Switches to the new configuration"
+        echo -e ""
+      '';
     };
   };
 }

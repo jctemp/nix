@@ -36,6 +36,13 @@ in {
       hidpi = true;
     };
 
+    # HARDWARE
+
+    nvidia = {
+      enable = true;
+      open = true;
+    };
+
     # MEDIA
 
     audio = {
