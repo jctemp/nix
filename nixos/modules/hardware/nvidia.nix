@@ -27,32 +27,22 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    hardware = {
-      opengl = {
-        enable = true;
-        driSupport = true;
-        driSupport32Bit = true;
-        extraPackages = with pkgs; [
-          rocmPackages.clr.icd
-          intel-compute-runtime
-          intel-media-driver
-          ocl-icd
-        ];
-      };
-      nvidia = {
-        modesetting.enable = true;
-        nvidiaSettings = true;
-        open = true;
-        package = config.boot.kernelPackages.nvidiaPackages.stable;
-        # prime = {
-        #   offload = {
-        #     enable = true;
-        #     enableOffloadCmd = true;
-        #   };
-        #   intelBusId = "PCI:0:2:0";
-        #   nvidiaBusId = "PCI:1:0:0";
-        # };
-      };
+    environment.systemPackages = [
+      (pkgs.writeShellScriptBin "nvidia-offload" ''
+        export __NV_PRIME_RENDER_OFFLOAD=1
+        export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+        export __GLX_VENDOR_LIBRARY_NAME=nvidia
+        export __VK_LAYER_NV_optimus=NVIDIA_only
+        exec -a "$0" "$@"
+      '')
+    ];
+
+    hardware.nvidia = {
+      modesetting.enable = true;
+      nvidiaSettings = true;
+      open = cfg.open;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      prime = cfg.prime;
     };
 
     services.xserver.videoDrivers = ["nvidia"];
