@@ -26,7 +26,7 @@ in {
         if config.host.gpg.enable
         then [
           # GPG w/ Yubikey (Multiple keys)
-          (pkgs.writers.writeDash "gpg-reset-yubikey-id" ''
+          (pkgs.writeShellScriptBin "gpg-reset-yubikey-id" ''
             echo "Reset gpg to make new key available."
             set -x
             set -e
