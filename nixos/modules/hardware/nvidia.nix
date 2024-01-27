@@ -38,11 +38,10 @@ in {
     ];
 
     hardware.nvidia = {
+      inherit (cfg) open prime;
       modesetting.enable = true;
       nvidiaSettings = true;
-      open = cfg.open;
       package = config.boot.kernelPackages.nvidiaPackages.stable;
-      prime = cfg.prime;
     };
 
     services.xserver.videoDrivers = ["nvidia"];

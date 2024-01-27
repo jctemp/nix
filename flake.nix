@@ -42,18 +42,20 @@
   in {
     formatter.${system} = pkgs.alejandra;
 
-    packages.${system} = rec {
-      default = iso;
-      iso = nixos-generators.nixosGenerate {
-        inherit system;
-        format = "install-iso";
-        specialArgs = {
-          inherit self;
+    packages.${system} = let
+      image = type:
+        nixos-generators.nixosGenerate {
+          inherit system;
+          format = type;
+          specialArgs = {
+            inherit self;
+          };
+          modules = [
+            ./iso.nix
+          ];
         };
-        modules = [
-          ./iso.nix
-        ];
-      };
+    in {
+      installer = image "install-iso";
     };
     nixosConfigurations = {
       sussex = lib.mkHost {

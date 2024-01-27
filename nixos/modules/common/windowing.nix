@@ -20,6 +20,12 @@ in {
       default = true;
       description = "Enable HiDPI support";
     };
+
+    wayland = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable Wayland support";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -30,7 +36,7 @@ in {
       displayManager = {
         defaultSession = "gnome";
         gdm.enable = true;
-        gdm.wayland = true;
+        gdm.wayland = cfg.wayland;
       };
     };
 

@@ -1,4 +1,9 @@
-{config, pkgs, hostName, users, ...}: let
+{
+  config,
+  hostName,
+  users,
+  ...
+}: let
   userNames = map (user: user.userName) users;
 in {
   imports = [

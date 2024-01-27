@@ -36,14 +36,13 @@ in {
 
   config = {
     time = {
-      timeZone = cfg.time.timeZone;
-      hardwareClockInLocalTime = cfg.time.hardwareClockInLocalTime;
+      inherit (cfg.time) timeZone hardwareClockInLocalTime;
     };
 
     i18n = {
       defaultLocale = cfg.i18n.default;
       extraLocaleSettings = let
-        extraLocale = cfg.i18n.extraLocale;
+        inherit (cfg.i18n) extraLocale;
       in {
         LC_ADDRESS = extraLocale;
         LC_IDENTIFICATION = extraLocale;

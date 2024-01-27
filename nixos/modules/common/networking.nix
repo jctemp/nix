@@ -27,7 +27,7 @@ in {
 
   config = lib.mkIf cfg.enable {
     networking = {
-      hostName = cfg.hostName;
+      inherit (cfg) hostName;
       wireless.enable = false;
       networkmanager.enable = true;
     };

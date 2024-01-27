@@ -1,6 +1,5 @@
 {
   self,
-  config,
   pkgs,
   modulesPath,
   lib,
@@ -11,8 +10,8 @@
   ];
 
   nix.settings = {
-      experimental-features = "nix-command flakes";
-      trusted-users = ["root"];
+    experimental-features = "nix-command flakes";
+    trusted-users = ["root"];
   };
 
   boot = {

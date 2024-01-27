@@ -34,6 +34,7 @@ in {
     windowing = {
       enable = true;
       hidpi = true;
+      wayland = false;
     };
 
     # HARDWARE
