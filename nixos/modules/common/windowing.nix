@@ -50,7 +50,10 @@ in {
       enable = true;
       driSupport = true;
       driSupport32Bit = true;
-      extraPackages = with pkgs; [ocl-icd];
+      extraPackages = with pkgs; [
+        ocl-icd
+        intel-compute-runtime
+      ];
     };
   };
 }

@@ -12,13 +12,16 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-hardware.url = "github:NixOS/nixos-hardware";
+
+    nixos-generators.url = "github:nix-community/nixos-generators";
+    nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
     self,
     nixpkgs,
-    home-manager,
     nix-hardware,
+    nixos-generators,
     ...
   }: let
     system = "x86_64-linux";
@@ -39,6 +42,19 @@
   in {
     formatter.${system} = pkgs.alejandra;
 
+    packages.${system} = rec {
+      default = iso;
+      iso = nixos-generators.nixosGenerate {
+        inherit system;
+        format = "install-iso";
+        specialArgs = {
+          inherit self;
+        };
+        modules = [
+          ./iso.nix
+        ];
+      };
+    };
     nixosConfigurations = {
       sussex = lib.mkHost {
         inherit system users;
@@ -51,7 +67,7 @@
         version = "23.11";
         modules = [
           # MS Surface patches
-          nix-hardware.nixosModules.microsoft-surface-common
+          #nix-hardware.nixosModules.microsoft-surface-common
         ];
       };
     };
@@ -95,9 +111,9 @@
           sudo nixos-rebuild switch --flake .#"''${hostname}"
         '')
 
+        alejandra
         deadnix
         nil
-        alejandra
         statix
       ];
       shellHook = ''
