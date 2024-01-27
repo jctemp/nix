@@ -55,4 +55,32 @@
         ]
         ++ modules;
     };
+
+  # Create a Home configuration.
+  mkHome = {
+    # Name of the user, e.g. "worker"
+    username,
+    # The state version to use, e.g. "23.05"
+    version,
+    # The architecture, e.g. "x86_64-linux"
+    system ? "x86_64-linux",
+    # Modules to import, e.g. [ ./modules/foo.nix ]
+    modules ? [],
+  }: let
+    pkgs = import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
+  in
+    nixpkgs.lib.nixosSystem
+    {
+      inherit system;
+      specialArgs = {inherit self pkgs username;};
+      modules =
+        [
+          "${self}/home/${username}"
+          {system.stateVersion = version;}
+        ]
+        ++ modules;
+    };
 }

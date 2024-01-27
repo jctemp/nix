@@ -1,3 +1,0 @@
-{...}: {
-  # TODO: Migrate .home here
-}

@@ -15,14 +15,18 @@
 
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
+
+    vscode-config.url = "github:jctemp/.vsvim";
+    vscode-config.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
-    self,
-    nixpkgs,
+    home-manager,
     nix-hardware,
     nixos-generators,
-    ...
+    nixpkgs,
+    self,
+    vscode-config,
   }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
@@ -57,6 +61,7 @@
     in {
       installer = image "install-iso";
     };
+
     nixosConfigurations = {
       sussex = lib.mkHost {
         inherit system users;
@@ -69,25 +74,21 @@
         version = "23.11";
         modules = [
           # MS Surface patches
-          #nix-hardware.nixosModules.microsoft-surface-common
+          nix-hardware.nixosModules.microsoft-surface-common
         ];
       };
     };
 
-    # homeConfigurations = {
-    #   ${user} = home-manager.lib.homeManagerConfiguration {
-    #     inherit pkgs;
-    #     extraSpecialArgs = {
-    #       inherit inputs;
-    #       username = "${user}";
-    #     };
-    #     modules = [
-    #       {
-    #         system.stateVersion = "23.11";
-    #       }
-    #     ];
-    #   };
-    # };
+    homeConfigurations = {
+      temple = lib.mkHome {
+        inherit system;
+        username = "temple";
+        version = "23.11";
+        modules = [
+          vscode-config.nixosModules.homeMangerModule
+        ];
+      };
+    };
 
     devShells.${system}.default = pkgs.mkShell {
       buildInputs = with pkgs; [
@@ -113,11 +114,31 @@
           sudo nixos-rebuild switch --flake .#"''${hostname}"
         '')
 
+        (writeShellScriptBin "home-check" ''
+          nix fmt --no-write-lock-file
+          home-manager build --flake .
+          rm result
+        '')
+
+        (writeShellScriptBin "home-upgrade" ''
+          if [ -z "$1" ]; then
+            username=$(whoami)
+          else
+            username=$1
+          fi
+
+          nix fmt --no-write-lock-file
+          home-manager switch --flake .#''${username}
+        '')
+
         alejandra
         deadnix
         nil
         statix
       ];
+
+      packages = [pkgs.home-manager];
+
       shellHook = ''
         GREEN="\033[0;32m"
         NC="\033[0m"
@@ -137,6 +158,16 @@
         echo -e "  - Formats all nix files"
         echo -e "  - Updates the lock file"
         echo -e "  - Switches to the new configuration"
+        echo -e ""
+        echo -e "''${GREEN}Home Manager Configuration''${NC}"
+        echo -e ""
+        echo -e "''${BOLD}home-check''${NC}"
+        echo -e "  - Formats all nix files"
+        echo -e "  - Builds the home manager configuration to check for errors"
+        echo -e ""
+        echo -e "''${BOLD}home-upgrade''${NC}"
+        echo -e "  - Formats all nix files"
+        echo -e "  - Switches to the new home manager configuration"
         echo -e ""
       '';
     };
