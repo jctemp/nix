@@ -34,7 +34,7 @@
       config.allowUnfree = true;
     };
     lib = import ./lib.nix {
-      inherit self nixpkgs pkgs;
+      inherit self nixpkgs home-manager;
     };
     users = [
       {

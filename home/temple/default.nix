@@ -1,6 +1,7 @@
 {
   pkgs,
   username,
+  version,
   ...
 }: {
   home = {
@@ -12,6 +13,7 @@
       keepassxc
       spotify
     ];
+    stateVersion = version;
   };
 
   programs = {

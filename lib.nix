@@ -1,7 +1,7 @@
 {
   self,
+  home-manager ? import <home-manager> {},
   nixpkgs ? <nixpkgs>,
-  ...
 }: rec {
   mkUsers = users:
     builtins.foldl'
@@ -72,15 +72,12 @@
       config.allowUnfree = true;
     };
   in
-    nixpkgs.lib.nixosSystem
+    home-manager.lib.homeManagerConfiguration
     {
-      inherit system;
-      specialArgs = {inherit self pkgs username;};
+      inherit pkgs;
+      extraSpecialArgs = {inherit self username version;};
       modules =
-        [
-          "${self}/home/${username}"
-          {system.stateVersion = version;}
-        ]
+        ["${self}/home/${username}"]
         ++ modules;
     };
 }
