@@ -106,13 +106,23 @@
       settings = builtins.fromTOML (builtins.readFile ./settings/starship.toml);
     };
 
-    # zellij = {
-    #   enable = true;
-    #   enableBashIntegration = true;
-    #   settings = {
-    #     simplified_ui = true;
-    #   };
-    # };
+    vscode = {
+      enable = true;
+      extensions = with pkgs; [
+        vscode-extensions.github.copilot
+        vscode-extensions.ms-pyright.pyright
+        vscode-extensions.ms-python.black-formatter
+        vscode-extensions.ms-python.python
+        vscode-extensions.ms-python.vscode-pylance
+        vscode-extensions.ms-toolsai.jupyter
+        vscode-extensions.ms-toolsai.jupyter-renderers
+        vscode-extensions.ms-toolsai.vscode-jupyter-cell-tags
+        vscode-extensions.ms-toolsai.vscode-jupyter-slideshow
+        vscode-extensions.njpwerner.autodocstring
+        vscode-extensions.yzhang.markdown-all-in-one
+      ];
+      mutableExtensionsDir = true;
+    };
 
     home-manager.enable = true;
   };
