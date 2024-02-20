@@ -48,7 +48,7 @@
       enable = true;
       userName = "Jamie Temple";
       userEmail = "jamie-temple@live.de";
-      signing.key = "9F39F1D0A59BA7B2";
+      signing.key = "1F7AD43C1F17EC41";
       signing.signByDefault = true;
     };
 
@@ -65,54 +65,54 @@
 
     gitui = {
       enable = true;
-      keyConfig = ''
-        (
-            open_help: Some(( code: F(1), modifiers: ( bits: 0,),)),
+      keyConfig = ./settings/gitui.ron;
+    };
 
-            move_left: Some(( code: Char('h'), modifiers: ( bits: 0,),)),
-            move_right: Some(( code: Char('l'), modifiers: ( bits: 0,),)),
-            move_up: Some(( code: Char('k'), modifiers: ( bits: 0,),)),
-            move_down: Some(( code: Char('j'), modifiers: ( bits: 0,),)),
-
-            popup_up: Some(( code: Char('p'), modifiers: ( bits: 2,),)),
-            popup_down: Some(( code: Char('n'), modifiers: ( bits: 2,),)),
-            page_up: Some(( code: Char('b'), modifiers: ( bits: 2,),)),
-            page_down: Some(( code: Char('f'), modifiers: ( bits: 2,),)),
-            home: Some(( code: Char('g'), modifiers: ( bits: 0,),)),
-            end: Some(( code: Char('G'), modifiers: ( bits: 1,),)),
-            shift_up: Some(( code: Char('K'), modifiers: ( bits: 1,),)),
-            shift_down: Some(( code: Char('J'), modifiers: ( bits: 1,),)),
-
-            edit_file: Some(( code: Char('I'), modifiers: ( bits: 1,),)),
-
-            status_reset_item: Some(( code: Char('U'), modifiers: ( bits: 1,),)),
-
-            diff_reset_lines: Some(( code: Char('u'), modifiers: ( bits: 0,),)),
-            diff_stage_lines: Some(( code: Char('s'), modifiers: ( bits: 0,),)),
-
-            stashing_save: Some(( code: Char('w'), modifiers: ( bits: 0,),)),
-            stashing_toggle_index: Some(( code: Char('m'), modifiers: ( bits: 0,),)),
-
-            stash_open: Some(( code: Char('l'), modifiers: ( bits: 0,),)),
-
-            abort_merge: Some(( code: Char('M'), modifiers: ( bits: 1,),)),
-        )
-      '';
+    helix = {
+      enable = true;
+      defaultEditor = true;
+      extraPackages = with pkgs; [
+        lldb
+        clang-tools
+        cmake-language-server
+        dockerfile-language-server-nodejs
+        gopls
+        haskell-language-server
+        marksman
+        nil
+        nodePackages.bash-language-server
+        nodePackages.typescript-language-server
+        nodePackages.vscode-langservers-extracted
+        ocamlPackages.dune_3
+        ocamlPackages.ocaml-lsp
+        ocamlPackages.reason
+        opam
+        python311Packages.python-lsp-server
+        rust-analyzer
+        swiProlog
+        taplo
+        texlab
+        texlab
+        typst-lsp
+        yaml-language-server
+        zls
+      ];
+      settings = builtins.fromTOML (builtins.readFile ./settings/hx-settings.toml);
     };
 
     starship = {
       enable = true;
       enableBashIntegration = true;
-      settings = import ./settings/starship.nix;
+      settings = builtins.fromTOML (builtins.readFile ./settings/starship.toml);
     };
 
-    zellij = {
-      enable = true;
-      enableBashIntegration = true;
-      settings = {
-        simplified_ui = true;
-      };
-    };
+    # zellij = {
+    #   enable = true;
+    #   enableBashIntegration = true;
+    #   settings = {
+    #     simplified_ui = true;
+    #   };
+    # };
 
     home-manager.enable = true;
   };

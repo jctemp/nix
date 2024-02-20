@@ -15,9 +15,6 @@
 
     nixos-generators.url = "github:nix-community/nixos-generators";
     nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
-
-    vscode-config.url = "github:jctemp/.vsvim";
-    vscode-config.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = {
@@ -26,7 +23,6 @@
     nixos-generators,
     nixpkgs,
     self,
-    vscode-config,
   }: let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
@@ -84,9 +80,7 @@
         inherit system;
         username = "temple";
         version = "23.11";
-        modules = [
-          vscode-config.nixosModules.homeMangerModule
-        ];
+        modules = [];
       };
     };
 

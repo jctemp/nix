@@ -29,22 +29,28 @@
     };
   };
 
-  environment.systemPackages = with pkgs; [
-    bat
-    bottom
-    curl
-    du-dust
-    eva
-    fd
-    felix-fm
-    git
-    helix
-    mkpasswd
-    neovim
-    ripgrep
-    tree
-    wget
-  ];
+  environment = {
+    systemPackages = with pkgs; [
+      bat
+      bottom
+      curl
+      du-dust
+      eva
+      fd
+      felix-fm
+      git
+      helix
+      mkpasswd
+      ripgrep
+      tree
+      wget
+    ];
+    interactiveShellInit = ''
+      export EDITOR=hx
+      export VISUAL=hx
+      export HISTSIZE=100000
+    '';
+  };
 
   system.stateVersion = "${version}";
 }
