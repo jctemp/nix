@@ -98,6 +98,7 @@
         zls
       ];
       settings = builtins.fromTOML (builtins.readFile ./settings/hx-settings.toml);
+      languages = builtins.fromTOML (builtins.readFile ./settings/hx-languages.toml);
     };
 
     starship = {
