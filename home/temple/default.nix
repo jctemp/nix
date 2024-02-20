@@ -98,7 +98,6 @@
         zls
       ];
       settings = builtins.fromTOML (builtins.readFile ./settings/hx-settings.toml);
-      languages = builtins.fromTOML (builtins.readFile ./settings/hx-languages.toml);
     };
 
     starship = {
@@ -126,6 +125,7 @@
         vscode-extensions.ms-vscode-remote.remote-ssh
         vscode-extensions.ms-vsliveshare.vsliveshare
         vscode-extensions.njpwerner.autodocstring
+        vscode-extensions.nvarner.typst-lsp
         vscode-extensions.yzhang.markdown-all-in-one
         vscode-extensions.zhuangtongfa.material-theme
       ];
