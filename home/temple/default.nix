@@ -109,7 +109,10 @@
     vscode = {
       enable = true;
       extensions = with pkgs; [
+        vscode-extensions.christian-kohler.path-intellisense
         vscode-extensions.github.copilot
+        vscode-extensions.jnoortheen.nix-ide
+        vscode-extensions.mkhl.direnv
         vscode-extensions.ms-pyright.pyright
         vscode-extensions.ms-python.black-formatter
         vscode-extensions.ms-python.python
@@ -118,10 +121,15 @@
         vscode-extensions.ms-toolsai.jupyter-renderers
         vscode-extensions.ms-toolsai.vscode-jupyter-cell-tags
         vscode-extensions.ms-toolsai.vscode-jupyter-slideshow
+        vscode-extensions.ms-vscode-remote.remote-containers
+        vscode-extensions.ms-vscode-remote.remote-ssh
+        vscode-extensions.ms-vsliveshare.vsliveshare
         vscode-extensions.njpwerner.autodocstring
         vscode-extensions.yzhang.markdown-all-in-one
+        vscode-extensions.zhuangtongfa.material-theme
       ];
       mutableExtensionsDir = true;
+      userSettings = builtins.fromJSON (builtins.readFile ./settings/vscode.json);
     };
 
     home-manager.enable = true;
