@@ -29,9 +29,9 @@
         specialArgs = {inherit (args) hostId hostName hostRole username;};
         modules =
           [
-            "${args.self}/nixos/common"
-            "${args.self}/nixos/roles"
-            "${args.self}/nixos/machines/${args.hostName}"
+            "${args.self}/common"
+            "${args.self}/roles"
+            "${args.self}/machines/${args.hostName}"
             {
               nixpkgs.config.allowUnfree = true;
               system.stateVersion = args.stateVersion;
