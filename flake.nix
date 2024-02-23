@@ -95,6 +95,8 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           (writeShellScriptBin "check" ''
+            deadnix
+            statix check
             nix fmt --no-write-lock-file
             nix flake check --no-write-lock-file --all-systems
           '')
