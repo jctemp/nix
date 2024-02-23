@@ -15,41 +15,83 @@
     nix-hardware.url = "github:NixOS/nixos-hardware";
   };
 
-  outputs = inputs @ {self, ...}: let
-    lib = import ./lib.nix {inherit (inputs) nixpkgs;};
-    user = "temple";
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    nixos-generators,
+    nix-hardware,
+  }: let
+    mergeHosts = configs:
+      builtins.foldl' (hosts: host: hosts // host) {} configs;
+    mkHost = args: {
+      ${args.hostName} = args.nixpkgs.lib.nixosSystem {
+        specialArgs = {inherit (args) hostId hostName hostRole username;};
+        modules =
+          [
+            "${args.self}/nixos/common"
+            "${args.self}/nixos/roles"
+            "${args.self}/nixos/machines/${args.hostName}"
+            {
+              nixpkgs.config.allowUnfree = true;
+              system.stateVersion = args.stateVersion;
+              users.users.${args.username} = {
+                isNormalUser = true;
+                extraGroups = ["wheel"];
+              };
+            }
+          ]
+          ++ args.modules;
+      };
+    };
+    username = "temple";
   in
     {
-      nixosConfigurations = lib.mergeHosts [
-        (lib.mkHost {
-          inherit self;
-          inherit user;
+      nixosConfigurations = mergeHosts [
+        (mkHost {
+          inherit self nixpkgs username;
           hostId = "eeae2b1c";
           hostName = "sussex";
           hostRole = "workstation";
           stateVersion = "23.11";
           modules = [];
         })
-        (lib.mkHost {
-          inherit self;
-          inherit user;
+        (mkHost {
+          inherit self nixpkgs username;
           hostId = "25365b33";
           hostName = "cornwall";
           hostRole = "workstation";
           stateVersion = "23.11";
           modules = [
-            inputs.nix-hardware.nixosModules.microsoft-surface-common
+            nix-hardware.nixosModules.microsoft-surface-common
           ];
         })
       ];
     }
-    // (inputs.flake-utils.lib.eachDefaultSystem (system: let
-      pkgs = import inputs.nixpkgs {
+    // (flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
     in {
       formatter = pkgs.alejandra;
+      packages = rec {
+        default = iso;
+        iso =
+          if builtins.filter (x: x == system) ["x86_64-linux" "aarch64-linux"] != []
+          then
+            nixos-generators.nixosGenerate {
+              inherit system;
+              specialArgs = {inherit self pkgs;};
+              modules = [./iso.nix];
+              format = "install-iso";
+            }
+          else
+            pkgs.stdenv.mkDerivation {
+              name = "empty-derivation";
+              inherit system;
+            };
+      };
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           (writeShellScriptBin "check" ''

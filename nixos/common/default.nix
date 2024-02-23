@@ -1,7 +1,7 @@
 {
   config,
   pkgs,
-  user,
+  username,
   ...
 }: {
   imports = [
@@ -129,5 +129,5 @@
     pcscd.enable = true;
   };
 
-  users.users.${user}.extraGroups = ["docker" "libvirt"];
+  users.users.${username}.extraGroups = ["docker" "libvirt"];
 }

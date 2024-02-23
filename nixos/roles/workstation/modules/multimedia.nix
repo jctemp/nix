@@ -1,7 +1,7 @@
 # Music, video, audio and other media
 {
   pkgs,
-  user,
+  username,
   ...
 }: {
   environment = {
@@ -36,5 +36,5 @@
     };
   };
 
-  users.users.${user}.extraGroups = ["audio"];
+  users.users.${username}.extraGroups = ["audio"];
 }
