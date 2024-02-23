@@ -1,83 +1,139 @@
+/*
+Flake NixOS configuration helper functions
+*/
 {
-  self,
+  nixpkgs ? import <nixpkgs> {},
   home-manager ? import <home-manager> {},
-  nixpkgs ? <nixpkgs>,
-}: rec {
-  mkUsers = users:
-    builtins.foldl'
-    (all: user: all // user) {} (builtins.map mkUser users);
+}: {
+  /*
+    *
+  Merge a list of host configurations into a single attribute set.
 
-  mkUser = {
-    # Name of the user, e.g. "nixos"
-    userName,
-    # Password hash, use mkpasswd
-    hashedPassword,
-    # Sudoer?
-    isSudoer ? false,
+  # Example
+
+  ```nix
+  mergeHosts [
+    { hostA = { ... }; }
+    { hostB = { ... }; }
+  ]
+  ```
+
+  # Type
+
+  ```
+  mergeHosts :: [AttrSet] -> AttrSet
+  ```
+
+  # Arguments
+
+  - [configs] A list of host configurations.
+
+  */
+  mergeHosts = configs:
+    builtins.foldl' (hosts: host: hosts // host) {} configs;
+
+  /*
+    *
+  Create a NixOS configuration for a single host.
+
+  # Example
+
+  ```nix
+  mkHost {
+    hostId = "eeffbbff";
+    hostName = "hostA";
+    stateVersion = "23.11";
+    user = "username";
+  }
+  ```
+
+  # Type
+
+  ```
+  mkHost :: AttrSet -> AttrSet
+  ```
+
+  # Arguments
+
+  - [self] The current flake.
+  - [hostId] The 32-bit host ID of the machine. Use `head -c4 /dev/urandom | od -A none -t x4`.
+  - [hostName] The name of the machine. It must match the path: `./machines/<hostName>`.
+  - [hostRole] The role of the machine. See `./roles` for available roles.
+  - [stateVersion] The first version of NixOS one has installed on this particular machine.
+  - [user] The users that should be created on this machine.
+  - [modules] Arbitrary modules that are extern but must be available for this host.
+
+  */
+  mkHost = {
+    self,
+    hostId,
+    hostName,
+    hostRole,
+    stateVersion,
+    user,
+    modules ? [],
   }: {
-    ${userName} = {
-      inherit hashedPassword;
-      isNormalUser = true;
-      extraGroups =
-        if isSudoer
-        then ["wheel" "networkmanager"]
-        else ["networkmanager"];
+    ${hostName} = nixpkgs.lib.nixosSystem {
+      specialArgs = {inherit hostId hostName hostRole user;};
+      modules = [
+        "${self}/nixos/common"
+        "${self}/nixos/roles"
+        "${self}/nixos/machines/${hostName}"
+        {
+          nixpkgs.config.allowUnfree = true;
+          system.stateVersion = stateVersion;
+          users.users.${user} = {
+            isNormalUser = true;
+            extraGroups = ["wheel"];
+          };
+        }
+      ];
     };
   };
 
-  # Create a NixOS systems derivation.
-  mkHost = {
-    # Name of the host, e.g. "nixos"
-    hostName,
-    # The state version to use, e.g. "23.05"
-    version,
-    # System users, e.g. [ { userName = "nixos"; hashedPassword = "..."; isSudoer = true; }; ]
-    users ? [],
-    # The architecture, e.g. "x86_64-linux"
-    system ? "x86_64-linux",
-    # Modules to import, e.g. [ ./modules/foo.nix ]
-    modules ? [],
-  }: let
-    pkgs = import nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
-  in
-    nixpkgs.lib.nixosSystem
-    {
-      inherit system;
-      specialArgs = {inherit self pkgs hostName version users;};
-      modules =
-        [
-          "${self}/nixos"
-          "${self}/nixos/host/${hostName}"
-          {users.users = mkUsers users;}
-        ]
-        ++ modules;
-    };
+  /*
+    *
+  Create a home-manager configuration for a user.
 
-  # Create a Home configuration.
+  # Example
+
+  ```nix
+  mkHome {
+    temple = lib.mkHome {
+      inherit (inputs) self;
+      inherit user;
+      stateVersion = "23.11";
+    };
+  }
+  ```
+
+  # Type
+
+  ```
+  mkHome :: AttrSet -> AttrSet
+  ```
+
+  # Arguments
+
+  - [self] The current flake.
+  - [pkgs] The Nixpkgs package set with a specific version and architecture.
+  - [user] The user for which to create the home-manager configuration.
+  - [stateVersion] The first version of NixOS one has installed on this particular machine.
+
+  */
   mkHome = {
-    # Name of the user, e.g. "worker"
-    username,
-    # The state version to use, e.g. "23.05"
-    version,
-    # The architecture, e.g. "x86_64-linux"
-    system ? "x86_64-linux",
-    # Modules to import, e.g. [ ./modules/foo.nix ]
-    modules ? [],
-  }: let
-    pkgs = import nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
-  in
-    home-manager.lib.homeManagerConfiguration
-    {
+    self,
+    pkgs,
+    user,
+    stateVersion,
+  }: {
+    ${user} = home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
-      extraSpecialArgs = {inherit self username version;};
-      modules =
-        ["${self}/home/${username}"]
-        ++ modules;
+      specialArgs = {
+        inherit stateVersion;
+        username = user;
+      };
+      modules = ["${self}/home/${user}"];
     };
+  };
 }

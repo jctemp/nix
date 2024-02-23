@@ -4,11 +4,11 @@
   pkgs,
   ...
 }: let
-  cfg = config.host.nvidia;
+  cfg = config.hosts.nvidia;
 in {
   imports = [];
 
-  options.host.nvidia = {
+  options.hosts.nvidia = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -27,6 +27,12 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    hardware.opengl = {
+      enable = true;
+      driSupport = true;
+      driSupport32Bit = true;
+    };
+
     environment.systemPackages = [
       (pkgs.writeShellScriptBin "nvidia-offload" ''
         export __NV_PRIME_RENDER_OFFLOAD=1

@@ -1,11 +1,11 @@
 {
   pkgs,
   username,
-  version,
+  stateVersion,
   ...
 }: {
   home = {
-    inherit username;
+    inherit username stateVersion;
     homeDirectory = "/home/${username}";
     packages = with pkgs; [
       firefox
@@ -39,7 +39,6 @@
       yaml-language-server
       zls
     ];
-    stateVersion = version;
   };
 
   programs = {
@@ -130,7 +129,11 @@
         vscode-extensions.zhuangtongfa.material-theme
       ];
       mutableExtensionsDir = true;
-      userSettings = builtins.fromJSON (builtins.readFile ./settings/vscode.json);
+      userSettings =
+        (builtins.fromJSON (builtins.readFile ./settings/vscode.json))
+        // {
+          "terminal.integrated.defaultProfile.windows" = "${pkgs.bashInteractive}/bin/bash";
+        };
     };
 
     home-manager.enable = true;

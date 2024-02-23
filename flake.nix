@@ -7,163 +7,84 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
-
-    home-manager.url = "github:nix-community/home-manager/release-23.11";
-    home-manager.inputs.nixpkgs.follows = "nixpkgs";
-
+    flake-utils.url = "github:numtide/flake-utils";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-23.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-hardware.url = "github:NixOS/nixos-hardware";
-
-    nixos-generators.url = "github:nix-community/nixos-generators";
-    nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {
-    home-manager,
-    nix-hardware,
-    nixos-generators,
-    nixpkgs,
-    self,
-  }: let
-    system = "x86_64-linux";
-    pkgs = import nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
-    lib = import ./lib.nix {
-      inherit self nixpkgs home-manager;
-    };
-    users = [
-      {
-        userName = "temple";
-        hashedPassword = "$y$j9T$w/AhqxbUlgZ9BNIomxHAC0$qYJ1E.lfV7I6u4cDQ3Zprk5HKsMYgR1iWEgUAuWFnr4";
-        isSudoer = true;
-      }
-    ];
-  in {
-    formatter.${system} = pkgs.alejandra;
-
-    packages.${system} = let
-      image = type:
-        nixos-generators.nixosGenerate {
-          inherit system;
-          format = type;
-          specialArgs = {
-            inherit self;
-          };
+  outputs = inputs @ {flake-utils, ...}: let
+    lib = import ./lib.nix {inherit (inputs) nixpkgs home-manager;};
+    user = "temple";
+  in
+    {
+      nixosConfigurations = lib.mergeHosts [
+        (lib.mkHost {
+          inherit (inputs) self;
+          inherit user;
+          hostId = "eeae2b1c";
+          hostName = "sussex";
+          hostRole = "workstation";
+          stateVersion = "23.11";
+          modules = [];
+        })
+        (lib.mkHost {
+          inherit (inputs) self;
+          inherit user;
+          hostId = "25365b33";
+          hostName = "cornwall";
+          hostRole = "workstation";
+          stateVersion = "23.11";
           modules = [
-            ./iso.nix
+            inputs.nix-hardware.nixosModules.microsoft-surface-common
           ];
-        };
-    in {
-      installer = image "install-iso";
-    };
-
-    nixosConfigurations = {
-      sussex = lib.mkHost {
-        inherit system users;
-        hostName = "sussex";
-        version = "23.11";
+        })
+      ];
+    }
+    // (flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = import inputs.nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
       };
-      cornwall = lib.mkHost {
-        inherit system users;
-        hostName = "cornwall";
-        version = "23.11";
-        modules = [
-          # MS Surface patches
-          nix-hardware.nixosModules.microsoft-surface-common
+    in {
+      formatter = pkgs.alejandra;
+      homeConfigurations = {
+        ${user} = lib.mkHome {
+          inherit (inputs) self;
+          inherit pkgs user;
+          stateVersion = "23.11";
+        };
+      };
+      devShells.default = pkgs.mkShell {
+        packages = with pkgs; [
+          (writeShellScriptBin "check" ''
+            nix fmt --no-write-lock-file
+            nix flake check --no-write-lock-file --all-systems
+          '')
+          (writeShellScriptBin "update" ''
+            nix fmt --no-write-lock-file
+            nix flake update --commit-lock-file
+          '')
+          (writeShellScriptBin "upgrade" ''
+            if [ -z "$1" ]; then
+              hostname=$(hostname)
+            else
+              hostname=$1
+            fi
+            nix fmt --no-write-lock-file
+            sudo nixos-rebuild switch --flake .#"''${hostname}"
+          '')
+          alejandra
+          deadnix
+          nil
+          statix
         ];
       };
-    };
-
-    homeConfigurations = {
-      temple = lib.mkHome {
-        inherit system;
-        username = "temple";
-        version = "23.11";
-        modules = [];
-      };
-    };
-
-    devShells.${system}.default = pkgs.mkShell {
-      buildInputs = with pkgs; [
-        (writeShellScriptBin "check" ''
-          nix fmt --no-write-lock-file
-          nix flake check --no-write-lock-file
-        '')
-
-        (writeShellScriptBin "update" ''
-          nix fmt --no-write-lock-file
-          nix flake update --commit-lock-file
-        '')
-
-        (writeShellScriptBin "upgrade" ''
-          if [ -z "$1" ]; then
-            hostname=$(hostname)
-          else
-            hostname=$1
-          fi
-
-          nix fmt --no-write-lock-file
-          nix flake update --commit-lock-file
-          sudo nixos-rebuild switch --flake .#"''${hostname}"
-        '')
-
-        (writeShellScriptBin "home-check" ''
-          nix fmt --no-write-lock-file
-          home-manager build --flake .
-          rm result
-        '')
-
-        (writeShellScriptBin "home-upgrade" ''
-          if [ -z "$1" ]; then
-            username=$(whoami)
-          else
-            username=$1
-          fi
-
-          nix fmt --no-write-lock-file
-          home-manager switch --flake .#''${username}
-        '')
-
-        alejandra
-        deadnix
-        nil
-        statix
-      ];
-
-      packages = [pkgs.home-manager];
-
-      shellHook = ''
-        GREEN="\033[0;32m"
-        NC="\033[0m"
-        BOLD="\033[1m"
-
-        echo -e "''${GREEN}NixOS Configuration''${NC}"
-        echo -e ""
-        echo -e "''${BOLD}check''${NC}"
-        echo -e "  - Formats all nix files"
-        echo -e "  - Checks the flake"
-        echo -e ""
-        echo -e "''${BOLD}update''${NC}"
-        echo -e "  - Formats all nix files"
-        echo -e "  - Updates the lock file"
-        echo -e ""
-        echo -e "''${BOLD}upgrade''${NC}"
-        echo -e "  - Formats all nix files"
-        echo -e "  - Updates the lock file"
-        echo -e "  - Switches to the new configuration"
-        echo -e ""
-        echo -e "''${GREEN}Home Manager Configuration''${NC}"
-        echo -e ""
-        echo -e "''${BOLD}home-check''${NC}"
-        echo -e "  - Formats all nix files"
-        echo -e "  - Builds the home manager configuration to check for errors"
-        echo -e ""
-        echo -e "''${BOLD}home-upgrade''${NC}"
-        echo -e "  - Formats all nix files"
-        echo -e "  - Switches to the new home manager configuration"
-        echo -e ""
-      '';
-    };
-  };
+    }));
 }
