@@ -8,10 +8,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-23.11";
     flake-utils.url = "github:numtide/flake-utils";
-    home-manager = {
-      url = "github:nix-community/home-manager/release-23.11";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -19,14 +15,14 @@
     nix-hardware.url = "github:NixOS/nixos-hardware";
   };
 
-  outputs = inputs @ {flake-utils, ...}: let
-    lib = import ./lib.nix {inherit (inputs) nixpkgs home-manager;};
+  outputs = inputs @ {self, ...}: let
+    lib = import ./lib.nix {inherit (inputs) nixpkgs;};
     user = "temple";
   in
     {
       nixosConfigurations = lib.mergeHosts [
         (lib.mkHost {
-          inherit (inputs) self;
+          inherit self;
           inherit user;
           hostId = "eeae2b1c";
           hostName = "sussex";
@@ -35,7 +31,7 @@
           modules = [];
         })
         (lib.mkHost {
-          inherit (inputs) self;
+          inherit self;
           inherit user;
           hostId = "25365b33";
           hostName = "cornwall";
@@ -47,20 +43,13 @@
         })
       ];
     }
-    // (flake-utils.lib.eachDefaultSystem (system: let
+    // (inputs.flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import inputs.nixpkgs {
         inherit system;
         config.allowUnfree = true;
       };
     in {
       formatter = pkgs.alejandra;
-      homeConfigurations = {
-        ${user} = lib.mkHome {
-          inherit (inputs) self;
-          inherit pkgs user;
-          stateVersion = "23.11";
-        };
-      };
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           (writeShellScriptBin "check" ''
