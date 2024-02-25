@@ -45,6 +45,7 @@ in {
 
     hardware.nvidia = {
       inherit (cfg) open prime;
+      # Useful and required for wayland compositors
       modesetting.enable = true;
       nvidiaSettings = true;
       package = config.boot.kernelPackages.nvidiaPackages.stable;

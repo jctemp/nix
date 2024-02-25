@@ -1,6 +1,10 @@
 {
   config,
   lib,
+<<<<<<< HEAD:common/modules/virtualisation.nix
+=======
+  pkgs,
+>>>>>>> 7bf64ee (refactor(project): role-centric approach does not make senses):modules/common/virtualisation.nix
   username,
   ...
 }: {
@@ -20,6 +24,13 @@
   };
 
   config = {
+<<<<<<< HEAD:common/modules/virtualisation.nix
+=======
+    environment.systemPackages = [
+      pkgs.libguestfs
+    ];
+
+>>>>>>> 7bf64ee (refactor(project): role-centric approach does not make senses):modules/common/virtualisation.nix
     virtualisation.libvirtd.enable = config.hosts.virtualisation.libvirt.enable;
     programs.virt-manager.enable = config.hosts.virtualisation.libvirt.enable;
 

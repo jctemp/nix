@@ -1,9 +1,15 @@
 {pkgs, ...}: {
   imports = [
+<<<<<<< HEAD:common/default.nix
     ./modules/networking.nix
     ./modules/nvidia.nix
     ./modules/system-tools.nix
     ./modules/virtualisation.nix
+=======
+    ./common
+    ./desktop
+    ./multimedia
+>>>>>>> 7bf64ee (refactor(project): role-centric approach does not make senses):modules/default.nix
   ];
 
   nix = {
@@ -69,6 +75,13 @@
         echo "Now the new key should work."
       '')
 
+      # Defaults
+      pkgs.curl
+      pkgs.git
+      pkgs.ripgrep
+      pkgs.tree
+      pkgs.wget
+
       # Yubikey
       pkgs.yubico-piv-tool
       pkgs.yubikey-manager
@@ -78,22 +91,13 @@
       pkgs.yubikey-touch-detector
       pkgs.yubioath-flutter
 
-      # GPG itself
+      # GPG
       pkgs.gnupg
       pkgs.pinentry
 
-      # Backup Keys
+      # Further tools
       pkgs.paperkey
-      pkgs.pgpdump
-      pkgs.parted
-      pkgs.cryptsetup
-
-      # Other useful tools
-      pkgs.cfssl
       pkgs.pcsctools
-
-      # libvirt stuff
-      pkgs.libguestfs
     ];
     shellInit = init;
     interactiveShellInit = init;

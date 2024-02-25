@@ -1,8 +1,11 @@
-# Desktop environment
-# - Window manager customization, themes, and icon packs.
-# - System tray applications, panel applets
 {pkgs, ...}: {
   environment = {
+    sessionVariables = {
+      # fight invisible cursors
+      WLR_NO_HARDWARE_CURSORS = "1";
+      # hint for wayland
+      NIXOS_OZONE_WL = "1";
+    };
     gnome.excludePackages =
       (with pkgs; [
         gnome-photos
@@ -40,7 +43,6 @@
       displayManager.gdm = {
         enable = true;
         wayland = true;
-        banner = "Welcome!";
       };
       desktopManager.gnome.enable = true;
     };
