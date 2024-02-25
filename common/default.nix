@@ -1,13 +1,9 @@
-{
-  config,
-  pkgs,
-  username,
-  ...
-}: {
+{pkgs, ...}: {
   imports = [
     ./modules/networking.nix
     ./modules/nvidia.nix
     ./modules/system-tools.nix
+    ./modules/virtualisation.nix
   ];
 
   nix = {
@@ -103,20 +99,7 @@
     interactiveShellInit = init;
   };
 
-  virtualisation = {
-    libvirtd.enable = true;
-    docker = {
-      enable = true;
-      rootless = {
-        enable = true;
-        setSocketVariable = true;
-      };
-      enableNvidia = config.hosts.nvidia.enable;
-    };
-  };
-
   programs = {
-    virt-manager.enable = true;
     ssh.startAgent = false;
     gnupg.agent = {
       enable = true;
@@ -128,6 +111,4 @@
     udev.packages = [pkgs.yubikey-personalization];
     pcscd.enable = true;
   };
-
-  users.users.${username}.extraGroups = ["docker" "libvirt"];
 }
