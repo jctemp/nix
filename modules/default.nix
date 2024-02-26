@@ -1,15 +1,8 @@
 {pkgs, ...}: {
   imports = [
-<<<<<<< HEAD:common/default.nix
-    ./modules/networking.nix
-    ./modules/nvidia.nix
-    ./modules/system-tools.nix
-    ./modules/virtualisation.nix
-=======
     ./common
     ./desktop
     ./multimedia
->>>>>>> 7bf64ee (refactor(project): role-centric approach does not make senses):modules/default.nix
   ];
 
   nix = {
