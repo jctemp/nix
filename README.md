@@ -11,18 +11,18 @@ host separately.
 
 ## Overview
 
-- *flake.nix/flake.lock:* Nix flake files for defining dependencies and ensuring 
+- _flake.nix/flake.lock:_ Nix flake files for defining dependencies and ensuring 
   reproducibility.
-- *iso.nix:* Configuration for building a custom NixOS installation ISO.
-- *machines/:* Machine-specific NixOS configurations and hardware settings.
-- *modules/:* Reusable NixOS configuration modules for various functionalities.
+- _iso.nix:_ Configuration for building a custom NixOS installation ISO.
+- _machines/:_ Machine-specific NixOS configurations and hardware settings.
+- _modules/:_ Reusable NixOS configuration modules for various functionalities.
 
 ## Machines
 
 Each subdirectory within machines represents a distinct machine:
 
-- machines/[machine-name]/default.nix: General system configurations for the 
+- _machines/[machine-name]/default.nix:_ General system configurations for the 
   specified machine.
-- machines/[machine-name]/hardware-configuration.nix: Hardware-specific settings 
+- _machines/[machine-name]/hardware-configuration.nix:_ Hardware-specific settings 
   (e.g., graphics drivers, kernel modules).
 
