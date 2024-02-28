@@ -1,7 +1,7 @@
 {
   hostId,
   hostName,
-  username,
+  userName,
   ...
 }: {
   networking = {
@@ -10,5 +10,5 @@
     networkmanager.enable = true;
   };
 
-  users.users.${username}.extraGroups = ["networkmanager"];
+  users.users.${userName}.extraGroups = ["networkmanager"];
 }

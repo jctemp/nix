@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  username,
+  userName,
   ...
 }: {
   imports = [];
@@ -37,7 +37,7 @@
       enableNvidia = config.hosts.nvidia.enable;
     };
 
-    users.users.${username}.extraGroups =
+    users.users.${userName}.extraGroups =
       (
         if config.hosts.virtualisation.docker.enable
         then ["docker"]
