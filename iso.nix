@@ -33,6 +33,8 @@
 
   environment = {
     systemPackages = with pkgs; [
+      (writeShellScriptBin "rpool" (builtins.readFile ./scripts/rpool.sh))
+      (writeShellScriptBin "configure" (builtins.readFile ./scripts/configure.sh))
       neovim
       git
       jq

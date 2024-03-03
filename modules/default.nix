@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{pkgs, lib, ...}: {
   imports = [
     ./common
     ./desktop
@@ -22,7 +22,8 @@
   };
 
   boot = {
-    supportedFilesystems = ["ext4" "btrfs" "xfs" "ntfs" "fat" "vfat" "exfat"];
+    kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
+    supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
     loader = {
       efi.canTouchEfiVariables = true;
       grub = {
