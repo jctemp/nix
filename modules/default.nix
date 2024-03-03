@@ -24,12 +24,19 @@
   boot = {
     supportedFilesystems = ["ext4" "btrfs" "xfs" "ntfs" "fat" "vfat" "exfat"];
     loader = {
-      systemd-boot.enable = true;
       efi.canTouchEfiVariables = true;
+      grub = {
+        enable = true;
+        device = "nodev";
+        useOSProber = true;
+        configurationLimit = 10;
+      };
     };
   };
 
   time.timeZone = "Europe/Berlin";
+  # RTC time to local time such that Windows can cope
+  time.hardwareClockInLocalTime = true;
 
   i18n = {
     defaultLocale = "en_US.UTF-8";

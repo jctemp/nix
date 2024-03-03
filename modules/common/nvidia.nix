@@ -27,12 +27,6 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    hardware.opengl = {
-      enable = true;
-      driSupport = true;
-      driSupport32Bit = true;
-    };
-
     environment.systemPackages = [
       (pkgs.writeShellScriptBin "nvidia-offload" ''
         export __NV_PRIME_RENDER_OFFLOAD=1
