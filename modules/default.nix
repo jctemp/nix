@@ -115,4 +115,12 @@
     udev.packages = [pkgs.yubikey-personalization];
     pcscd.enable = true;
   };
+
+  fonts.packages = [
+    pkgs.dejavu_fonts
+    pkgs.cm_unicode
+    pkgs.libertine
+    pkgs.roboto
+    pkgs.noto-fonts
+  ];
 }
