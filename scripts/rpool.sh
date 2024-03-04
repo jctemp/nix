@@ -2,12 +2,10 @@
 
 # Error Codes
 MNT_NOT_SET=1
-DISKS_IDS_NOT_SET=2
+DISKS_NOT_SET=2
 INVALID_BLOCK_DEVICE=3
-INVALID_DEVICE_PATH=4
-PARTITION_FAILED=5
-INVALID_RPOOL_PARTITION=6
-DATASET_CREATION_FAILED=7
+INVALID_RPOOL_PARTITION=5
+DATASET_CREATION_FAILED=6
 
 # ------------------ Input and Device Validation ------------------------------
 
@@ -16,27 +14,17 @@ if [ -z "${MNT}" ]; then
     exit $MNT_NOT_SET
 fi
 
-if [ -z "${DISKS_IDS}" ]; then
+if [ -z "${DISKS}" ]; then
     echo "Error: DISKS_IDS is not set."
-    exit $DISKS_IDS_NOT_SET
+    exit $DISKS_NOT_SET
 fi
 
-for id in "${DISKS_IDS}"; do
-    if
-        ! lsblk "${id}" &
-        >/dev/null
-    then
-        echo "Error: '${id}' is not a block device"
+for disk in "${DISKS}"; do
+    if [ ! -b $disk ]; then
+        echo "$disk is not a block storage".
         exit $INVALID_BLOCK_DEVICE
     fi
-
-    if [ $(dirname "${id}") != "/dev/disk/by-id" ]; then
-        echo "Error: '${id}' is not an id (/dev/disk/by-id)"
-        exit $INVALID_DEVICE_PATH
-    fi
-
 done
-unset id
 
 if [ -z "${RESERVE}" ]; then
     echo "Warning: RESERVE is not set. Defaults to RESERVE=8."
@@ -46,28 +34,21 @@ fi
 # ------------------ Disk Partitioning ----------------------------------------
 
 partition_disk() {
-    id="${1}"
-    if ! blkdiscard -f "${id}" 2>/dev/null; then
-        echo "Warning: Failed to erase data on disk ${id}. Continuing..."
-    fi
+    disk="${1}"
+    blkdiscard -f "${id}" || true
 
-    if ! parted --script --align=optimal "${id}" -- \
+    parted --script --align=optimal "${disk}" -- \
         mklabel gpt \
         mkpart EFI 1MiB 4GiB \
-        mkpart rpool 4GiB -$((RESERVE))GiB \
-        set 1 esp on 2>/dev/null; then
+        mkpart rpool 4GiB -"${RESERVE}"GiB \
+        set 1 esp on
 
-        echo "Error: Failed to partition disk ${id}"
-        exit $PARTITION_FAILED
-    fi
-
-    partprobe "${id}"
+    partprobe "${disk}"
     udevadm settle
-    unset id
 }
 
-for id in ${DISKS_IDS}; do
-    partition_disk "${id}"
+for disk in ${DISKS}; do
+    partition_disk "${disk}"
 done
 
 # ------------------ ZFS Configuration ----------------------------------------
@@ -75,14 +56,18 @@ done
 rpool_args="rpool"
 
 # 1. check the amount of disks (set mirror)
-root_count=$(echo "${DISKS_IDS}" | wc -w)
+root_count=$(echo "${DISKS}" | wc -w)
 if [ "${root_count}" -gt 1 ]; then
     rpool_args="${rpool_args} mirror"
 fi
 
 # 2. concat all disks to rpool_args
-for id in "${DISKS_IDS}"; do
-    rpool_args="${rpool_args} ${id}-part2"
+for disk in "${DISKS}"; do
+    for part in $(ls "${disk}"*2); do
+        if [ -e "${part}"]; then
+            rpool_args="${rpool_args} ${part}"
+        fi
+    done
 done
 
 # 3. create zpool with rpool_args
@@ -92,7 +77,6 @@ zpool create \
     -o autotrim=on \
     -O acltype=posixacl \
     -O canmount=off \
-    -O compression=zstd \
     -O dnodesize=auto \
     -O mountpoint=none \
     -O normalization=formD \
@@ -138,15 +122,19 @@ mount -t zfs rpool/safe/persist "${MNT}"/persist
 
 # ------------------ EFI Partition  -------------------------------------------
 
-for id in "${DISKS_IDS}"; do
-    mkfs.vfat -n EFI "${id}-part1"
-    partprobe "${id}"
+for disk in "${DISKS}"; do
+    mkfs.vfat -n EFI "${disk}-part1"
+    partprobe "${disk}"
 done
 
 udevadm settle
 
 mkdir -p "${MNT}"/boot
-for id in "${DISKS_IDS}"; do
-    mount "${id}-part1" "${MNT}"/boot
-    break
+for disk in "${DISKS}"; do
+    for part in $(ls "${disk}"*1); do
+        if [ -e "${part}"]; then
+            mount "${part}" "${MNT}"/boot
+            break
+        fi
+    done
 done
