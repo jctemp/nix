@@ -35,12 +35,6 @@
     "NetworkManager/system-connections" = {
       source = "/persist/etc/NetworkManager/system-connections/";
     };
-    "ssh" = {
-      source = "/persist/etc/ssh";
-    };
-    "grub.d" = {
-      source = "/persist/etc/grub.d";
-    };
   };
 
   systemd.tmpfiles.rules = [
