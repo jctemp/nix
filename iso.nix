@@ -33,7 +33,7 @@
 
   environment = {
     systemPackages = with pkgs; [
-      (writeShellScriptBin "host-install" (builtins.readFile ./host-install.sh))
+      (writeShellScriptBin "host-install" (builtins.readFile ./host-install))
       neovim
       git
       jq

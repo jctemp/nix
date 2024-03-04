@@ -1,5 +1,4 @@
 {
-  pkgs,
   lib,
   ...
 }: {
@@ -21,20 +20,6 @@
     virtualisation = {
       docker.enable = true;
       libvirt.enable = true;
-    };
-  };
-
-  boot = {
-    supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
-
-    loader = {
-      efi = {
-        canTouchEfiVariables = true;
-      };
-      systemd-boot = {
-        enable = true;
-        configurationLimit = 10;
-      };
     };
   };
 }
