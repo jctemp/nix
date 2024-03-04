@@ -34,6 +34,9 @@
   environment = {
     systemPackages = with pkgs; [
       (writeShellScriptBin "rpool" (builtins.readFile ./scripts/rpool.sh))
+      (writeShellScriptBin "datasets" (builtins.readFile ./scripts/datasets.sh))
+      (writeShellScriptBin "efi" (builtins.readFile ./scripts/efi.sh))
+      (writeShellScriptBin "partition" (builtins.readFile ./scripts/partition.sh))
       (writeShellScriptBin "configure" (builtins.readFile ./scripts/configure.sh))
       neovim
       git

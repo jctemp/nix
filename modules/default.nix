@@ -1,4 +1,8 @@
-{pkgs, lib, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   imports = [
     ./common
     ./desktop
@@ -25,10 +29,18 @@
     kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
     loader = {
-      efi.canTouchEfiVariables = true;
+      # efi.canTouchEfiVariables = true;
       grub = {
         enable = true;
-        device = "nodev";
+        zfsSupport = true;
+        efiSupport = true;
+        efiInstallAsRemovable = true;
+        mirroredBoots = [
+          {
+            devices = ["nodev"];
+            path = "/boot";
+          }
+        ];
         useOSProber = true;
         configurationLimit = 10;
       };

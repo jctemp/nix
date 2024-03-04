@@ -17,8 +17,5 @@
     "NetworkManager/system-connections" = {
       source = "/persist/etc/NetworkManager/system-connections/";
     };
-    systemd.tmpfiles.rules = [
-      "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
-    ];
   };
 }

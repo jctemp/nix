@@ -85,7 +85,8 @@
               inherit system;
               specialArgs = {inherit self pkgs;};
               modules = [./iso.nix];
-              format = "install-iso";
+              format = "iso";
+              # format = "install-iso";
             }
           else
             pkgs.stdenv.mkDerivation {
