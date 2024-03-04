@@ -18,21 +18,21 @@ function info {
 
 ################################################################################
 
-export DISK=$1
-export HOST=$2
-export REMOTE=$3
+if [ $# -ne 3 ]; then
+    err "install <DISK_PATH> <HOST> <REMOTE>"
+fi
 
-if [ ! -b "${DISK}" ]; then
+if [ ! -b "$1" ]; then
     err "Missing first argument. Expected block device name, e.g. 'sda'"
     exit 1
 fi
 
-if [ -z "${HOST}" ]; then
+if [ -z "$2" ]; then
     err "Missing second argument. Expected a host name."
     exit 1
 fi
 
-if [ -z "${REMOTE}" ]; then
+if [ -z "$3" ]; then
     err "Missing third argument. Expected a remote repository."
     exit 1
 fi
@@ -42,7 +42,11 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-export DISK_PATH="/dev/${DISK}"
+export DISK_PATH=$1
+export HOST=$2
+export REMOTE=$3
+
+export RESERVE=32
 
 export ZFS_POOL="rpool"
 export ZFS_LOCAL="${ZFS_POOL}/local"
@@ -137,11 +141,11 @@ LOCAL_PATH="/mnt/etc"
 SAFE_PATH="/mnt/persist/etc"
 
 info "Pulling remote NixOS configuration"
-mkdir -p "${SAFE}"
-git clone "${REMOTE}" "${SAFE}/nixos"
+mkdir -p "${SAFE_PATH}"
+git clone "${REMOTE}" "${SAFE_PATH}/nixos"
 
 info "Generating NixOS configuration (/mnt/persist/etc/nixos/*.nix) ..."
-FILE="${SAFE}/nixos/machines/${HOST}/hardware-configuration.nix"
+FILE="${SAFE_PATH}/nixos/machines/${HOST}/hardware-configuration.nix"
 
 if [ ! -f "$FILE" ]; then
     touch $FILE
@@ -151,10 +155,10 @@ nixos-generate-config --root "/mnt" --show-hardware-config |
     tee $FILE >/dev/null
 
 info "Copying configuraiton (/mnt/etc/nixos/*) ..."
-cp -R "${SAFE}/nixos" "${LOCAL}"
+cp -R "${SAFE_PATH}/nixos" "${LOCAL_PATH}"
 
 info "Installing NixOS to /mnt ..."
 nixos-install --root "/mnt" \
     --no-root-passwd \
-    --flake "${SAFE}/nixos#${HOST}"
+    --flake "${SAFE_PATH}/nixos#${HOST}"
 
