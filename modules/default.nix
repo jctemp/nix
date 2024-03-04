@@ -25,31 +25,7 @@
     };
   };
 
-  boot = {
-    kernelPackages = lib.mkForce pkgs.zfs.latestCompatibleLinuxPackages;
-    supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
-    loader = {
-      # efi.canTouchEfiVariables = true;
-      grub = {
-        enable = true;
-        zfsSupport = true;
-        efiSupport = true;
-        efiInstallAsRemovable = true;
-        mirroredBoots = [
-          {
-            devices = ["nodev"];
-            path = "/boot";
-          }
-        ];
-        useOSProber = true;
-        configurationLimit = 10;
-      };
-    };
-  };
-
   time.timeZone = "Europe/Berlin";
-  # RTC time to local time such that Windows can cope
-  time.hardwareClockInLocalTime = true;
 
   i18n = {
     defaultLocale = "en_US.UTF-8";
