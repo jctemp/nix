@@ -25,6 +25,17 @@
     };
   };
 
+  boot = {
+    supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
+    loader = {
+      efi.canTouchEfiVariables = true;
+      systemd-boot = {
+        enable = true;
+        configurationLimit = 10;
+      };
+    };
+  };
+
   time.timeZone = "Europe/Berlin";
 
   i18n = {

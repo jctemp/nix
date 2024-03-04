@@ -17,28 +17,11 @@
   };
 
   boot = {
-    kernelPackages = lib.mkForce pkgs.zfs.latestCompatibleLinuxPackages;
+    kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
-    zfs.forceImportRoot = false;
-
     initrd.postDeviceCommands = lib.mkAfter ''
       zfs rollback -r rpool/local/root@blank
     '';
-
-    loader = {
-      efi = {
-        canTouchEfiVariables = true;
-        efiSysMountPoint = "/boot";
-      };
-      grub = {
-        enable = true;
-        zfsSupport = true;
-        efiSupport = true;
-        devices = ["/dev/nvme0n1"];
-        useOSProber = true;
-        configurationLimit = 10;
-      };
-    };
   };
 
   time.hardwareClockInLocalTime = true;

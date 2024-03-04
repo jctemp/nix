@@ -155,6 +155,7 @@ nixos-generate-config --root "/mnt" --show-hardware-config |
     tee $FILE >/dev/null
 
 info "Copying configuraiton (/mnt/etc/nixos/*) ..."
+mkdir -p "${LOCAL_PATH}"
 cp -R "${SAFE_PATH}/nixos" "${LOCAL_PATH}"
 
 info "Installing NixOS to /mnt ..."
