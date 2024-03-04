@@ -26,7 +26,7 @@
   };
 
   boot = {
-    kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
+    kernelPackages = lib.mkForce pkgs.zfs.latestCompatibleLinuxPackages;
     supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
     loader = {
       # efi.canTouchEfiVariables = true;
