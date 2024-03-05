@@ -38,6 +38,8 @@
   };
 
   systemd.tmpfiles.rules = [
+    # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
+    # create symlink to
     "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
   ];
 }
