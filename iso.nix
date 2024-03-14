@@ -50,7 +50,7 @@
     hostName = "installer";
     hostId = "ffffffff";
     useDHCP = true;
-    wireless.enable = false;
+    wireless.enable = true;
     firewall = {
       enable = true;
       allowedTCPPorts = [];

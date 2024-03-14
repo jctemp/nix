@@ -35,6 +35,9 @@ in {
         export __VK_LAYER_NV_optimus=NVIDIA_only
         exec -a "$0" "$@"
       '')
+      pkgs.cudatoolkit
+      pkgs.cudaPackages.cudnn
+      pkgs.linuxPackages.nvidia_x11
     ];
 
     hardware.nvidia = {
@@ -42,7 +45,7 @@ in {
       # Useful and required for wayland compositors
       modesetting.enable = true;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
+      package = config.boot.kernelPackages.nvidiaPackages.production;
     };
 
     services.xserver.videoDrivers = ["nvidia"];
