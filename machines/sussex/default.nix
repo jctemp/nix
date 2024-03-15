@@ -6,10 +6,7 @@
   imports = [./hardware-configuration.nix];
 
   hosts = {
-    nvidia = {
-      enable = true;
-      open = true;
-    };
+    nvidia.enable = true;
     virtualisation = {
       docker.enable = true;
       libvirt.enable = true;

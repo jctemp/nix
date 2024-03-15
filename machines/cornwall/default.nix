@@ -4,7 +4,6 @@
   hosts = {
     nvidia = {
       enable = true;
-      open = false;
       prime = {
         offload = {
           enable = true;

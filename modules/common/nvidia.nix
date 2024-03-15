@@ -14,11 +14,6 @@ in {
       default = false;
       description = "Enable NVIDIA drivers";
     };
-    open = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Open source drivers";
-    };
     prime = lib.mkOption {
       type = lib.types.attrs;
       default = {};
@@ -27,7 +22,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [
+    environment.systemPackages = lib.mkIf (cfg.prime == {}) [
       (pkgs.writeShellScriptBin "nvidia-offload" ''
         export __NV_PRIME_RENDER_OFFLOAD=1
         export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
@@ -35,17 +30,14 @@ in {
         export __VK_LAYER_NV_optimus=NVIDIA_only
         exec -a "$0" "$@"
       '')
-      pkgs.cudatoolkit
-      pkgs.cudaPackages.cudnn
-      pkgs.linuxPackages.nvidia_x11
     ];
 
     hardware.nvidia = {
-      inherit (cfg) open prime;
-      # Useful and required for wayland compositors
+      inherit (cfg) prime;
+      open = false;
       modesetting.enable = true;
       nvidiaSettings = true;
-      package = config.boot.kernelPackages.nvidiaPackages.production;
+      package = config.boot.kernelPackages.nvidiaPackages.stable;
     };
 
     services.xserver.videoDrivers = ["nvidia"];
