@@ -49,9 +49,8 @@
   networking = {
     hostName = "installer";
     hostId = "ffffffff";
-    useDHCP = true;
     networkmanager.enable = true;
-    wireless.enable = true;
+    wireless.enable = false; # wpa_supplicant
     firewall = {
       enable = true;
       allowedTCPPorts = [];
