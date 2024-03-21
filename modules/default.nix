@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{pkgs, userName, ...}: {
   imports = [
     ./common
     ./desktop
@@ -17,8 +17,7 @@
     settings = {
       experimental-features = "nix-command flakes";
       auto-optimise-store = true;
-      trusted-users = ["root"];
-      substituters = ["https://cache.nixos.org/"];
+      trusted-users = ["root" userName];
     };
   };
 

@@ -1,5 +1,4 @@
 {
-  self,
   pkgs,
   modulesPath,
   lib,
@@ -42,7 +41,6 @@
       export EDITOR=nvim
       export VISUAL=nvim
       export HISTSIZE=100000
-      export CONFIG_PATH=${self}
     '';
   };
 
