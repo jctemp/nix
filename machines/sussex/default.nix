@@ -11,11 +11,15 @@
       docker.enable = true;
       libvirt.enable = true;
     };
+    boot = {
+      systemd-boot.enable = true;
+      canTouchEfiVariables = true;
+    };
   };
 
   boot = {
     kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
-    supportedFilesystems = lib.mkForce ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
+    supportedFilesystems = lib.mkForce ["zfs"];
     initrd.postDeviceCommands = lib.mkAfter ''
       zfs rollback -r rpool/local/root@blank
     '';

@@ -1,7 +1,11 @@
-{pkgs, userName, ...}: {
+{
+  pkgs,
+  userName,
+  ...
+}: {
   imports = [
     ./common
-    ./desktop
+    ./extra
     ./multimedia
   ];
 
@@ -18,17 +22,6 @@
       experimental-features = "nix-command flakes";
       auto-optimise-store = true;
       trusted-users = ["root" userName];
-    };
-  };
-
-  boot = {
-    supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs"];
-    loader = {
-      efi.canTouchEfiVariables = true;
-      systemd-boot = {
-        enable = true;
-        configurationLimit = 10;
-      };
     };
   };
 
@@ -100,6 +93,7 @@
   };
 
   programs = {
+    fuse.userAllowOther = true;
     ssh.startAgent = false;
     gnupg.agent = {
       enable = true;

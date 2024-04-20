@@ -22,7 +22,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = lib.mkIf (cfg.prime == {}) [
+    environment.systemPackages = [
       (pkgs.writeShellScriptBin "nvidia-offload" ''
         export __NV_PRIME_RENDER_OFFLOAD=1
         export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0

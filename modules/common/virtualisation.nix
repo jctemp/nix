@@ -45,7 +45,7 @@
       )
       ++ (
         if config.hosts.virtualisation.libvirt.enable
-        then ["libvirt"]
+        then ["libvirtd"]
         else []
       );
   };
