@@ -28,7 +28,7 @@
   };
 
   boot = {
-    kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
+    kernelPackages = lib.mkForce pkgs.zfs.latestCompatibleLinuxPackages;
     supportedFilesystems = lib.mkForce ["zfs"];
     initrd.postDeviceCommands = lib.mkAfter ''
       zfs rollback -r rpool/local/root@blank

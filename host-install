@@ -74,8 +74,14 @@ parted --script --align=optimal "$DISK_PATH" -- \
 partprobe "$DISK_PATH"
 sleep 1
 
-export BOOT="${DISK_PATH}p1"
-export ZFS="${DISK_PATH}p2"
+# if disk is /dev/sdX
+if [[ "$DISK_PATH" == /dev/sd* ]]; then
+    export BOOT="${DISK_PATH}1"
+    export ZFS="${DISK_PATH}2"
+else
+    export BOOT="${DISK_PATH}p1"
+    export ZFS="${DISK_PATH}p2"
+fi
 
 BOOT_DISK_UUID="$(blkid --match-tag UUID --output value $BOOT)"
 
