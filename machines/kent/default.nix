@@ -1,12 +1,10 @@
 {
-  modulesPath,
   pkgs,
   lib,
   ...
 }: {
   imports = [
     ./hardware-configuration.nix
-    (modulesPath + "/virtualisation/proxmox-lxc.nix")
   ];
 
   hosts = {
