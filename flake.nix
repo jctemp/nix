@@ -60,6 +60,13 @@
         })
         (mkHost {
           inherit self nixpkgs userName userPassword userKey;
+          hostId = "917e1048";
+          hostName = "kent";
+          stateVersion = "23.11";
+          modules = [];
+        })
+        (mkHost {
+          inherit self nixpkgs userName userPassword userKey;
           hostId = "25365b33";
           hostName = "cornwall";
           stateVersion = "23.11";
