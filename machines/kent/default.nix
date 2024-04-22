@@ -11,7 +11,10 @@
     desktop.enable = false;
     virtualisation.docker.enable = true;
     boot = {
-      systemd-boot.enable = true;
+      grub = {
+        enable = true;
+        device = "/dev/sda";
+      };
       canTouchEfiVariables = false;
     };
   };

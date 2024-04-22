@@ -49,6 +49,7 @@ in {
         };
         grub = {
           inherit (cfg.grub) enable device;
+          forceInstall = true;
           zfsSupport = true;
           efiSupport = true;
           configurationLimit = 5;
