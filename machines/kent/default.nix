@@ -1,9 +1,13 @@
 {
+  modulesPath,
   pkgs,
   lib,
   ...
 }: {
-  imports = [./hardware-configuration.nix];
+  imports = [
+    ./hardware-configuration.nix
+    (modulesPath + "/virtualisation/proxmox-lxc.nix")
+  ];
 
   hosts = {
     desktop.enable = false;
@@ -24,9 +28,12 @@
 
   time.hardwareClockInLocalTime = true;
 
-  services.zfs = {
-    autoScrub.enable = true;
-    autoSnapshot.enable = true;
+  services = {
+    zfs = {
+      autoScrub.enable = true;
+      autoSnapshot.enable = true;
+    };
+    cloud-init.network.enable = true;
   };
 
   environment.etc = {
