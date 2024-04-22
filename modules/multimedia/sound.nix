@@ -1,4 +1,9 @@
-{config, lib, ...}: lib.mkIf config.desktop.enable {
+{
+  config,
+  lib,
+  ...
+}:
+lib.mkIf config.hosts.desktop.enable {
   hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {

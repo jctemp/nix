@@ -3,9 +3,9 @@
   lib,
   pkgs,
   ...
-}: let 
+}: let
   cfg = config.hosts.desktop;
-in{
+in {
   imports = [];
 
   options.hosts.desktop = {
