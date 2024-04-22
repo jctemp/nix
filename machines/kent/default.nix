@@ -6,12 +6,10 @@
   imports = [./hardware-configuration.nix];
 
   hosts = {
+    desktop.enable = false;
     virtualisation.docker.enable = true;
     boot = {
-      grub = {
-        enable = true;
-        device = "/dev/sda";
-      };
+      systemd-boot.enable = true;
       canTouchEfiVariables = false;
     };
   };

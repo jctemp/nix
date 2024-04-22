@@ -1,5 +1,5 @@
 # Music, video, audio and other media
-_: {
+{config, lib, ...}: lib.mkIf config.desktop.enable {
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;

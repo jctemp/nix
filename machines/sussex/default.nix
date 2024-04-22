@@ -6,6 +6,7 @@
   imports = [./hardware-configuration.nix];
 
   hosts = {
+    desktop.enable = true;
     nvidia.enable = true;
     virtualisation = {
       docker.enable = true;
