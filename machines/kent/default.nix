@@ -35,6 +35,16 @@
       autoSnapshot.enable = true;
     };
     cloud-init.network.enable = true;
+    openssh = {
+      enable = true;
+      openFirewall = true;
+      settings = {
+        KbdInteractiveAuthentication = true;
+        PasswordAuthentication = false;
+        PermitRootLogin = "no";
+        X11Forwarding = true;
+      };
+    };
   };
 
   environment.etc = {
