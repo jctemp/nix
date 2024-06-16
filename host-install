@@ -140,7 +140,7 @@ mount -t zfs "$ZFS_DS_PERSIST" /mnt/persist
 info "Creating persistent directories ..."
 mkdir -p /mnt/persist/etc/NetworkManager/system-connections
 mkdir -p /mnt/persist/var/lib/bluetooth
-# mkdir -p /mnt/persist/etc/ssh
+mkdir -p /mnt/persist/etc/ssh
 
 LOCAL_PATH="/mnt/etc"
 SAFE_PATH="/mnt/persist/etc"

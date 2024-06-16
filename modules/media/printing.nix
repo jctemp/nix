@@ -1,10 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
-lib.mkIf config.hosts.desktop.enable {
+{pkgs, ...}: {
   services.avahi = {
     enable = true;
     nssmdns4 = true;

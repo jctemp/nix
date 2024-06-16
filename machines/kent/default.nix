@@ -1,39 +1,12 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
+{self, ...}: {
   imports = [
     ./hardware-configuration.nix
+
+    "${self}/modules/base.nix"
+    "${self}/modules/boot/grub.nix"
   ];
 
-  hosts = {
-    desktop.enable = false;
-    virtualisation.docker.enable = true;
-    boot = {
-      grub = {
-        enable = true;
-        device = "/dev/sda";
-      };
-      canTouchEfiVariables = false;
-    };
-  };
-
-  boot = {
-    kernelPackages = pkgs.zfs.latestCompatibleLinuxPackages;
-    supportedFilesystems = lib.mkForce ["zfs"];
-    initrd.postDeviceCommands = lib.mkAfter ''
-      zfs rollback -r rpool/local/root@blank
-    '';
-  };
-
-  time.hardwareClockInLocalTime = true;
-
   services = {
-    zfs = {
-      autoScrub.enable = true;
-      autoSnapshot.enable = true;
-    };
     cloud-init.network.enable = true;
     openssh = {
       enable = true;
@@ -44,12 +17,17 @@
         PermitRootLogin = "no";
         X11Forwarding = true;
       };
-    };
-  };
-
-  environment.etc = {
-    "NetworkManager/system-connections" = {
-      source = "/persist/etc/NetworkManager/system-connections/";
+      hostKeys = [
+        {
+          path = "/persist/ssh/ssh_host_ed25519_key";
+          type = "ed25519";
+        }
+        {
+          path = "/persist/ssh/ssh_host_rsa_key";
+          type = "rsa";
+          bits = 4096;
+        }
+      ];
     };
   };
 }

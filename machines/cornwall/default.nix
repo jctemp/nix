@@ -1,57 +1,35 @@
 {
+  self,
   pkgs,
-  lib,
   ...
 }: {
-  imports = [./hardware-configuration.nix];
+  imports = [
+    ./hardware-configuration.nix
 
-  hosts = {
-    desktop.enable = true;
-    nvidia = {
-      enable = true;
-      prime = {
-        offload = {
-          enable = true;
-          enableOffloadCmd = true;
-        };
-        intelBusId = "PCI:0:2:0";
-        nvidiaBusId = "PCI:1:0:0";
-      };
-    };
-    virtualisation = {
-      docker.enable = true;
-      libvirt.enable = true;
-    };
-    boot = {
-      systemd-boot.enable = true;
-      canTouchEfiVariables = true;
-    };
-  };
-
-  boot = {
-    kernelPackages = lib.mkForce pkgs.zfs.latestCompatibleLinuxPackages;
-    supportedFilesystems = lib.mkForce ["zfs"];
-    initrd.postDeviceCommands = lib.mkAfter ''
-      zfs rollback -r rpool/local/root@blank
-    '';
-  };
-
-  time.hardwareClockInLocalTime = true;
-
-  services.zfs = {
-    autoScrub.enable = true;
-    autoSnapshot.enable = true;
-  };
-
-  environment.etc = {
-    "NetworkManager/system-connections" = {
-      source = "/persist/etc/NetworkManager/system-connections/";
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
-    # create symlink to
-    "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
+    "${self}/modules/base.nix"
+    "${self}/modules/boot/systemd.nix"
+    "${self}/modules/nvidia.nix"
+    "${self}/modules/gnome.nix"
+    "${self}/modules/media/all.nix"
   ];
+
+  # Nvidia Optimus
+  environment.systemPackages = [
+    (pkgs.writeShellScriptBin "nvidia-offload" ''
+      export __NV_PRIME_RENDER_OFFLOAD=1
+      export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
+      export __GLX_VENDOR_LIBRARY_NAME=nvidia
+      export __VK_LAYER_NV_optimus=NVIDIA_only
+      exec -a "$0" "$@"
+    '')
+  ];
+
+  hardware.nvidia.prime = {
+    offload = {
+      enable = true;
+      enableOffloadCmd = true;
+    };
+    intelBusId = "PCI:0:2:0";
+    nvidiaBusId = "PCI:1:0:0";
+  };
 }
