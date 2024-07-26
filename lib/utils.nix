@@ -4,10 +4,15 @@
 
   mkHost = args: {
     ${args.hostName} = args.nixpkgs.lib.nixosSystem {
-      specialArgs = {
-        inherit (args) self hostId hostName userName zfsSupport cudaSupport;
-        inherit (args.boot) device canTouchEfiVariables;
-      };
+      specialArgs =
+        {
+          inherit (args) self hostId hostName userName zfsSupport cudaSupport yubikeySupport;
+        }
+        // (
+          if args.boot != null
+          then args.boot
+          else {}
+        );
       modules =
         [
           "${args.self}/machines/${args.hostName}"
