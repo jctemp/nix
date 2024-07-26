@@ -12,6 +12,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
     nix-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-wsl.url = "github:nix-community/NixOS-WSL/main";
   };
 
   outputs = {
@@ -19,6 +20,7 @@
     nixpkgs,
     flake-utils,
     nix-hardware,
+    nixos-wsl,
   }: let
     lib = import ./lib/utils.nix;
 
@@ -34,6 +36,7 @@
           hostName = "sussex";
           cudaSupport = true;
           zfsSupport = true;
+          yubikeySupport = true;
           boot = {
             device = "";
             canTouchEfiVariables = true;
@@ -47,6 +50,7 @@
           hostName = "cornwall";
           cudaSupport = true;
           zfsSupport = true;
+          yubikeySupport = true;
           boot = {
             device = "";
             canTouchEfiVariables = true;
@@ -62,12 +66,26 @@
           hostName = "kent";
           cudaSupport = false;
           zfsSupport = true;
+          yubikeySupport = false;
           boot = {
             device = "/dev/sda";
             canTouchEfiVariables = false;
           };
           stateVersion = "23.11";
           modules = [];
+        })
+        (lib.mkHost {
+          inherit self nixpkgs userName userPassword userKey;
+          hostId = "f4b3b3b4";
+          hostName = "wsl";
+          cudaSupport = false;
+          zfsSupport = false;
+          yubikeySupport = false;
+          boot = null;
+          stateVersion = "23.11";
+          modules = [
+            nixos-wsl.nixosModules.default
+          ];
         })
       ];
     }
