@@ -26,7 +26,6 @@
       register = true;
     };
     nativeSystemd = true;
-    # TODO: usbip - check yubikey ???
     useWindowsDriver = true;
     wslConf.network.hostname = hostName;
   };

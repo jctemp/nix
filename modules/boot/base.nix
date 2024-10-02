@@ -7,10 +7,6 @@
 }: {
   boot = {
     loader.efi.canTouchEfiVariables = canTouchEfiVariables;
-    kernelPackages =
-      if zfsSupport
-      then lib.mkOverride 1000 pkgs.zfs.latestCompatibleLinuxPackages
-      else lib.mkOverride 1000 pkgs.linuxPackages;
     initrd.postDeviceCommands =
       if zfsSupport
       then

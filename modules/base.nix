@@ -69,6 +69,7 @@
     pkgs.libertine
     pkgs.roboto
     pkgs.noto-fonts
+    pkgs.nerdfonts
   ];
 
   users.users.${userName}.extraGroups = ["networkmanager"];
