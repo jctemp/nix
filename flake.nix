@@ -42,7 +42,6 @@
         })
         (lib.mkHost {
           inherit self nixpkgs userName userPassword userKey;
-          hostId = "25365b33";
           hostName = "cornwall";
           cudaSupport = true;
           zfsSupport = true;
@@ -58,7 +57,6 @@
         })
         (lib.mkHost {
           inherit self nixpkgs userName userPassword userKey;
-          hostId = "917e1048";
           hostName = "kent";
           cudaSupport = false;
           zfsSupport = true;
@@ -72,7 +70,6 @@
         })
         (lib.mkHost {
           inherit self nixpkgs userName userPassword userKey;
-          hostId = "f4b3b3b4";
           hostName = "wsl";
           cudaSupport = false;
           zfsSupport = false;
