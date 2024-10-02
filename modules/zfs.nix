@@ -2,6 +2,8 @@
   services.zfs = {
     autoScrub.enable = zfsSupport;
     autoSnapshot.enable = zfsSupport;
+    trim.enable = true;
+    trim.interval = "weekly";
   };
 
   environment.etc =

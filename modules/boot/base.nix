@@ -7,6 +7,7 @@
 }: {
   boot = {
     loader.efi.canTouchEfiVariables = canTouchEfiVariables;
+    kernelPackages = lib.mkForce pkgs.linuxPackages;
     initrd.postDeviceCommands =
       if zfsSupport
       then

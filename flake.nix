@@ -29,7 +29,6 @@
       nixosConfigurations = lib.mergeHosts [
         (lib.mkHost {
           inherit self nixpkgs userName userPassword userKey;
-          hostId = "eeae2b1c";
           hostName = "sussex";
           cudaSupport = true;
           zfsSupport = true;
