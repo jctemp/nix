@@ -2,169 +2,196 @@
 
 set -euo pipefail
 
-################################################################################
+# Constants
+readonly COLOR_RESET="\033[0m"
+readonly RED_BG="\033[41m"
+readonly BLUE_BG="\033[44m"
+readonly GREEN_BG="\033[42m"
 
-export COLOR_RESET="\033[0m"
-export RED_BG="\033[41m"
-export BLUE_BG="\033[44m"
+readonly REQUIRED_COMMANDS=(parted zpool zfs git nixos-generate-config nixos-install)
+readonly ZFS_POOL="rpool"
+readonly ZFS_LOCAL="${ZFS_POOL}/local"
+readonly ZFS_SAFE="${ZFS_POOL}/safe"
+readonly DATASETS=(
+    "${ZFS_LOCAL}/root"
+    "${ZFS_LOCAL}/nix"
+    "${ZFS_SAFE}/home"
+    "${ZFS_SAFE}/persist"
+)
 
-function err {
-    echo -e "${RED_BG}$1${COLOR_RESET}"
+# Functions
+log() {
+    local -r level="$1"
+    local -r message="$2"
+    local bg_color
+
+    case "$level" in
+        "ERROR") bg_color="$RED_BG" ;;
+        "INFO") bg_color="$BLUE_BG" ;;
+        "SUCCESS") bg_color="$GREEN_BG" ;;
+        *) bg_color="$COLOR_RESET" ;;
+    esac
+
+    echo -e "${bg_color}[${level}] ${message}${COLOR_RESET}"
 }
 
-function info {
-    echo -e "${BLUE_BG}$1${COLOR_RESET}"
+error() {
+    log "ERROR" "$1"
+    exit 1
 }
 
-################################################################################
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        error "This script must be run as root"
+    fi
+}
 
-if [ $# -ne 3 ]; then
-    err "install <DISK_PATH> <HOST> <REMOTE>"
-fi
+check_dependencies() {
+    for cmd in "${REQUIRED_COMMANDS[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            error "Required command not found: $cmd"
+        fi
+    done
+}
 
-if [ ! -b "$1" ]; then
-    err "Missing first argument. Expected block device name, e.g. 'sda'"
-    exit 1
-fi
+parse_arguments() {
+    if [[ $# -lt 3 || $# -gt 4 ]]; then
+        error "Usage: $0 <DISK_PATH> <HOST> <REMOTE> [INSTALL_ONLY]"
+    fi
 
-if [ -z "$2" ]; then
-    err "Missing second argument. Expected a host name."
-    exit 1
-fi
+    DISK_PATH="$1"
+    HOST="$2"
+    REMOTE="$3"
+    INSTALL_ONLY=${4:-false}
 
-if [ -z "$3" ]; then
-    err "Missing third argument. Expected a remote repository."
-    exit 1
-fi
+    if [[ ! -b "$DISK_PATH" && "$INSTALL_ONLY" != "true" ]]; then
+        error "Invalid disk path: $DISK_PATH"
+    fi
 
-if [ "$EUID" -ne 0 ]; then
-    err "Must run as root"
-    exit 1
-fi
+    if [[ -z "$HOST" ]]; then
+        error "Host name cannot be empty"
+    fi
 
-export DISK_PATH=$1
-export HOST=$2
-export REMOTE=$3
+    if [[ -z "$REMOTE" ]]; then
+        error "Remote repository cannot be empty"
+    fi
+}
 
-export RESERVE=32
+partition_disk() {
+    log "INFO" "Partitioning disk $DISK_PATH..."
+    
+    # Securely erase the disk
+    blkdiscard -f "$DISK_PATH" || log "WARN" "blkdiscard failed, continuing anyway"
 
-export ZFS_POOL="rpool"
-export ZFS_LOCAL="${ZFS_POOL}/local"
-export ZFS_DS_ROOT="${ZFS_LOCAL}/root"
-export ZFS_DS_NIX="${ZFS_LOCAL}/nix"
+    parted --script --align=optimal "$DISK_PATH" -- \
+        mklabel gpt \
+        mkpart EFI 1MiB 4GiB \
+        mkpart rpool 4GiB -32GiB \
+        set 1 esp on
 
-export ZFS_SAFE="${ZFS_POOL}/safe"
-export ZFS_DS_HOME="${ZFS_SAFE}/home"
-export ZFS_DS_PERSIST="${ZFS_SAFE}/persist"
+    partprobe "$DISK_PATH"
+    sleep 2
 
-export ZFS_BLANK_SNAPSHOT="${ZFS_DS_ROOT}@blank"
+    # Determine partition names
+    if [[ "$DISK_PATH" == /dev/sd* ]]; then
+        BOOT="${DISK_PATH}1"
+        ZFS="${DISK_PATH}2"
+    else
+        BOOT="${DISK_PATH}p1"
+        ZFS="${DISK_PATH}p2"
+    fi
+}
 
-################################################################################
+create_filesystems() {
+    log "INFO" "Creating filesystems..."
 
-info "Running the UEFI (GPT) partitioning and formatting directions from the NixOS manual ..."
+    # Format boot partition
+    mkfs.vfat -n boot "$BOOT"
 
-blkdiscard -f "$DISK_PATH"
+    # Create ZFS pool
+    zpool create -f \
+        -o ashift=12 \
+        -o autotrim=on \
+        -O acltype=posixacl \
+        -O canmount=off \
+        -O compression=zstd \
+        -O dnodesize=auto \
+        -O normalization=formD \
+        -O relatime=on \
+        -O xattr=sa \
+        -O mountpoint=none \
+        "$ZFS_POOL" "$ZFS"
 
-parted --script --align=optimal "$DISK_PATH" -- \
-    mklabel gpt \
-    mkpart EFI 1MiB 4GiB \
-    mkpart rpool 4GiB -"${RESERVE}"GiB \
-    set 1 esp on
+    # Create ZFS datasets
+    for ds in "${DATASETS[@]}"; do
+        zfs create -o mountpoint=legacy "$ds"
+    done
 
-partprobe "$DISK_PATH"
-sleep 1
+    # Create a blank snapshot of the root dataset
+    zfs snapshot "${ZFS_LOCAL}/root@blank"
+}
 
-# if disk is /dev/sdX
-if [[ "$DISK_PATH" == /dev/sd* ]]; then
-    export BOOT="${DISK_PATH}1"
-    export ZFS="${DISK_PATH}2"
-else
-    export BOOT="${DISK_PATH}p1"
-    export ZFS="${DISK_PATH}p2"
-fi
+mount_filesystems() {
+    log "INFO" "Mounting filesystems..."
 
-BOOT_DISK_UUID="$(blkid --match-tag UUID --output value $BOOT)"
+    mount -t zfs "${ZFS_LOCAL}/root" /mnt
+    mkdir -p /mnt/{boot,nix,home,persist}
+    mount -t vfat "$BOOT" /mnt/boot
+    mount -t zfs "${ZFS_LOCAL}/nix" /mnt/nix
+    mount -t zfs "${ZFS_SAFE}/home" /mnt/home
+    mount -t zfs "${ZFS_SAFE}/persist" /mnt/persist
+}
 
-info "Formatting boot & swap partition ..."
-mkfs.vfat -n boot "$BOOT"
+setup_persistence() {
+    log "INFO" "Setting up persistent directories..."
 
-info "Creating '$ZFS_POOL' ZFS pool for '$ZFS' ..."
-zpool create \
-    -o ashift=12 \
-    -o autotrim=on \
-    -O acltype=posixacl \
-    -O canmount=off \
-    -O compression=zstd \
-    -O dnodesize=auto \
-    -O mountpoint=none \
-    -O normalization=formD \
-    -O relatime=on \
-    -O xattr=sa \
-    -f $ZFS_POOL $ZFS
-ZFS_DISK_UUID="$(blkid --match-tag UUID --output value $ZFS)"
+    mkdir -p /mnt/persist/etc/{nixos,NetworkManager/system-connections,ssh}
+    mkdir -p /mnt/persist/var/lib/bluetooth
+}
 
-info "Creating '$ZFS_DS_ROOT' ZFS dataset ..."
-zfs create -p -o mountpoint=legacy "$ZFS_DS_ROOT"
+clone_nixos_config() {
+    log "INFO" "Cloning NixOS configuration..."
 
-info "Creating '$ZFS_BLANK_SNAPSHOT' ZFS snapshot ..."
-zfs snapshot "$ZFS_BLANK_SNAPSHOT"
+    git clone "$REMOTE" /mnt/persist/etc/nixos
+}
 
-info "Mounting '$ZFS_DS_ROOT' to /mnt ..."
-mount -t zfs "$ZFS_DS_ROOT" /mnt
+generate_hardware_config() {
+    log "INFO" "Generating hardware configuration..."
 
-info "Mounting '$BOOT' to /mnt/boot ..."
-mkdir -p /mnt/boot
-mount -t vfat "$BOOT" /mnt/boot
+    local -r config_dir="/mnt/persist/etc/nixos/machines/${HOST}"
+    local -r config_file="${config_dir}/hardware-configuration.nix"
 
-info "Creating '$ZFS_DS_NIX' ZFS dataset ..."
-zfs create -p -o mountpoint=legacy "$ZFS_DS_NIX"
+    if [[ ! -d $config_dir ]]; then
+        error "$HOST is not part of the configuration."
+    fi    
 
-info "Mounting '$ZFS_DS_NIX' to /mnt/nix ..."
-mkdir -p /mnt/nix
-mount -t zfs "$ZFS_DS_NIX" /mnt/nix
+    nixos-generate-config --root /mnt --show-hardware-config > "$config_file"
+}
 
-info "Creating '$ZFS_DS_HOME' ZFS dataset ..."
-zfs create -p -o mountpoint=legacy "$ZFS_DS_HOME"
+install_nixos() {
+    log "INFO" "Installing NixOS..."
 
-info "Mounting '$ZFS_DS_HOME' to /mnt/home ..."
-mkdir -p /mnt/home
-mount -t zfs "$ZFS_DS_HOME" /mnt/home
+    nixos-install --root /mnt \
+        --no-root-passwd \
+        --flake "/mnt/persist/etc/nixos#${HOST}"
+}
 
-info "Creating '$ZFS_DS_PERSIST' ZFS dataset ..."
-zfs create -p -o mountpoint=legacy "$ZFS_DS_PERSIST"
+main() {
+    check_root
+    check_dependencies
+    parse_arguments "$@"
 
-info "Mounting '$ZFS_DS_PERSIST' to /mnt/persist ..."
-mkdir -p /mnt/persist
-mount -t zfs "$ZFS_DS_PERSIST" /mnt/persist
+    if [[ ! $INSTALL_ONLY ]]; then
+        partition_disk
+        create_filesystems
+        mount_filesystems
+        setup_persistence
+        clone_nixos_config
+        generate_hardware_config
+    fi
+    install_nixos
 
-info "Creating persistent directories ..."
-mkdir -p /mnt/persist/etc/NetworkManager/system-connections
-mkdir -p /mnt/persist/var/lib/bluetooth
-mkdir -p /mnt/persist/etc/ssh
+    log "SUCCESS" "NixOS installation completed successfully!"
+}
 
-LOCAL_PATH="/mnt/etc"
-SAFE_PATH="/mnt/persist/etc"
-
-info "Pulling remote NixOS configuration"
-mkdir -p "${SAFE_PATH}"
-git clone "${REMOTE}" "${SAFE_PATH}/nixos"
-
-info "Generating NixOS configuration (/mnt/persist/etc/nixos/*.nix) ..."
-FILE="${SAFE_PATH}/nixos/machines/${HOST}/hardware-configuration.nix"
-
-if [ ! -f "$FILE" ]; then
-    touch $FILE
-fi
-
-nixos-generate-config --root "/mnt" --show-hardware-config |
-    tee $FILE >/dev/null
-
-info "Copying configuraiton (/mnt/etc/nixos/*) ..."
-mkdir -p "${LOCAL_PATH}"
-cp -R "${SAFE_PATH}/nixos" "${LOCAL_PATH}"
-
-info "Installing NixOS to /mnt ..."
-nixos-install --root "/mnt" \
-    --no-root-passwd \
-    --flake "${SAFE_PATH}/nixos#${HOST}"
-
+main "$@"
