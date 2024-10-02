@@ -6,7 +6,7 @@
     ${args.hostName} = args.nixpkgs.lib.nixosSystem {
       specialArgs =
         {
-          inherit (args) self hostName userName zfsSupport cudaSupport yubikeySupport;
+          inherit (args) self hostName userName zfsSupport yubikeySupport;
         }
         // (
           if args.boot != null

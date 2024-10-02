@@ -1,13 +1,6 @@
-# canTouchEfiVariables = true;
-# device = "nodev"
-# zfsSupport = true;
-# userName
-# hostId
-# hostName
 {
   pkgs,
   userName,
-  hostId,
   hostName,
   ...
 }: {
