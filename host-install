@@ -62,7 +62,6 @@ parse_arguments() {
     DISK_PATH="$1"
     HOST="$2"
     REMOTE="$3"
-    INSTALL_ONLY=${4:-false}
 
     if [[ ! -b "$DISK_PATH" && "$INSTALL_ONLY" != "true" ]]; then
         error "Invalid disk path: $DISK_PATH"
@@ -124,7 +123,7 @@ create_filesystems() {
 
     # Create ZFS datasets
     for ds in "${DATASETS[@]}"; do
-        zfs create -o mountpoint=legacy "$ds"
+        zfs create -p -o mountpoint=legacy "$ds"
     done
 
     # Create a blank snapshot of the root dataset
@@ -181,14 +180,12 @@ main() {
     check_dependencies
     parse_arguments "$@"
 
-    if [[ ! $INSTALL_ONLY ]]; then
-        partition_disk
-        create_filesystems
-        mount_filesystems
-        setup_persistence
-        clone_nixos_config
-        generate_hardware_config
-    fi
+    partition_disk
+    create_filesystems
+    mount_filesystems
+    setup_persistence
+    clone_nixos_config
+    generate_hardware_config
     install_nixos
 
     log "SUCCESS" "NixOS installation completed successfully!"
