@@ -48,7 +48,7 @@
           };
           stateVersion = "23.11";
           modules = [
-            #nix-hardware.nixosModules.microsoft-surface-common
+            nix-hardware.nixosModules.microsoft-surface-common
           ];
         })
         (lib.mkHost {

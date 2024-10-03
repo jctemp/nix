@@ -25,6 +25,7 @@
   # ==== [ Networking ] =======================================================
 
   networking = {
+    inherit hostName;
     hostId = builtins.substring 0 8 (builtins.hashString "md5" hostName);
     wireless.enable = false;
     networkmanager.enable = true;
