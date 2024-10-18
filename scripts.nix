@@ -36,10 +36,10 @@ pkgs: [
   (pkgs.writeShellScriptBin "upgrade" ''
     if [ $(${pkgs.uutils-coreutils-noprefix}/bin/id -u) -ne 0 ]; then
       ${pkgs.uutils-coreutils-noprefix}/bin/echo "Root privileges required."
-      ${pkgs.uutils-coreutils-noprefix}/bin/exit 1
+      exit 1
     fi
 
-    local host=$1
+    host=$1
 
     if [ -z $host ]; then
       host=$(${pkgs.uutils-coreutils-noprefix}/bin/hostname)
@@ -54,7 +54,7 @@ pkgs: [
   (pkgs.writeShellScriptBin "rollback" ''
     if [ $(${pkgs.uutils-coreutils-noprefix}/bin/id -u) -ne 0 ]; then
       ${pkgs.uutils-coreutils-noprefix}/bin/echo "Root privileges required."
-      ${pkgs.uutils-coreutils-noprefix}/bin/exit 1
+      exit 1
     fi
 
     ${pkgs.nix}/bin/nix-env --list-generations --profile /nix/var/nix/profiles/system
@@ -66,7 +66,7 @@ pkgs: [
   (pkgs.writeShellScriptBin "delete" ''
     if [ $(${pkgs.uutils-coreutils-noprefix}/bin/id -u) -ne 0 ]; then
       ${pkgs.uutils-coreutils-noprefix}/bin/echo "Root privileges required."
-      ${pkgs.uutils-coreutils-noprefix}/bin/exit 1
+      exit 1
     fi
 
     ${pkgs.nix}/bin/nix-env --list-generations --profile /nix/var/nix/profiles/system
