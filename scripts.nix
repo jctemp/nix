@@ -7,6 +7,8 @@ pkgs: [
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  test:\n\tPerform a dry run build"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  update:\n\tFormat and update flake inputs"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  upgrade:\n\tFormat and switch to the new Home Manager configuration"
+    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  rollback:\n\tRollback to a previous generation"
+    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  Delete:\n\tDelete previous generations"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  clean:\n\tRemove result symlink and other build artifacts"
   '')
 
@@ -59,7 +61,7 @@ pkgs: [
 
     ${pkgs.nix}/bin/nix-env --list-generations --profile /nix/var/nix/profiles/system
     generation=""
-    ${pkgs.uutils-coreutils-noprefix}/bin/read -p "Enter number: " generation
+    read -p "Enter number: " generation
     ${pkgs.nix}/bin/nix-env --switch-generation $generation -p /nix/var/nix/profiles/system
   '')
 
@@ -71,7 +73,7 @@ pkgs: [
 
     ${pkgs.nix}/bin/nix-env --list-generations --profile /nix/var/nix/profiles/system
     generation=""
-    ${pkgs.uutils-coreutils-noprefix}/bin/read -p "Enter number(s): " generation
+    read -p "Enter number(s): " generation
     ${pkgs.nix}/bin/nix-env --profile /nix/var/nix/profiles/system --delete-generations $generation
   '')
 
