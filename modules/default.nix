@@ -1,9 +1,19 @@
 {
   pkgs,
-  userName,
   hostName,
+  users,
+  ulib,
   ...
 }: {
+  imports = [
+    ./boot.nix
+    ./multimedia.nix
+    ./rendering.nix
+    ./privacy.nix
+    ./virtualisation.nix
+    ./zfs.nix
+  ];
+
   # ==== [ Nix ] ==============================================================
 
   nix = {
@@ -18,7 +28,7 @@
     settings = {
       experimental-features = "nix-command flakes";
       auto-optimise-store = true;
-      trusted-users = ["root" userName];
+      trusted-users = ["root"] ++ (ulib.getNames users (u: u.root));
     };
   };
 
@@ -29,6 +39,7 @@
     hostId = builtins.substring 0 8 (builtins.hashString "md5" hostName);
     wireless.enable = false;
     networkmanager.enable = true;
+    firewall.enable = true;
   };
 
   # ==== [ Internationalisation and Time ] ====================================
@@ -66,13 +77,11 @@
     pkgs.nerdfonts
   ];
 
-  users.users.${userName}.extraGroups = ["networkmanager"];
+  users.users = ulib.populate users "extraGroups" ["networkmanager"];
   environment.systemPackages = [
     pkgs.curl
     pkgs.git
-    pkgs.ripgrep
     pkgs.tree
     pkgs.wget
-    pkgs.vim
   ];
 }

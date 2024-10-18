@@ -1,14 +1,38 @@
-{self, ...}: {
+{...}: {
   imports = [
     ./hardware-configuration.nix
-
-    "${self}/modules/base.nix"
-    "${self}/modules/boot/systemd.nix"
-    "${self}/modules/nvidia.nix"
-    "${self}/modules/gnome.nix"
-    "${self}/modules/media/all.nix"
-    "${self}/modules/pgp.nix"
-    "${self}/modules/virtualisation.nix"
-    "${self}/modules/zfs.nix"
   ];
+
+  module = {
+    boot = {
+      canTouchEfiVariables = true;
+      loader = "systemd";
+      device = "";
+    };
+    multimedia = {
+      enable = true;
+      bluetoothSupport = true;
+    };
+    rendering = {
+      renderer = "gnome";
+      nvidia = true;
+      opengl = true;
+    };
+
+    privacy = {
+      enable = true;
+      supportYubikey = true;
+    };
+    virtualisation = {
+      enable = true;
+      kubernetes = null;
+    };
+    zfs = {
+      enable = true;
+      root = {
+        enable = true;
+        rollback = ["rpool/local/root@blank"];
+      };
+    };
+  };
 }

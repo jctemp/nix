@@ -1,10 +1,39 @@
-{self, ...}: {
+{...}: {
   imports = [
     ./hardware-configuration.nix
-
-    "${self}/modules/base.nix"
-    "${self}/modules/boot/grub.nix"
   ];
+
+  module = {
+    boot = {
+      canTouchEfiVariables = false;
+      loader = "grub";
+      device = "/dev/sda";
+    };
+    multimedia = {
+      enable = false;
+      bluetoothSupport = false;
+    };
+    rendering = {
+      renderer = null;
+      nvidia = false;
+      opengl = true;
+    };
+    privacy = {
+      enable = true;
+      supportYubikey = false;
+    };
+    virtualisation = {
+      enable = true;
+      kubernetes = null;
+    };
+    zfs = {
+      enable = true;
+      root = {
+        enable = true;
+        rollback = ["rpool/local/root@blank"];
+      };
+    };
+  };
 
   services = {
     cloud-init.network.enable = true;
