@@ -4,7 +4,7 @@ pkgs: [
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  fmt:\n\tFormat Nix files without writing a lock file"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  check:\n\tRun statix and deadnix"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  mend:\n\tAttempt to automatically fix issues found by statix"
-    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  test:\n\tPerform a dry run build"
+    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  vm-build:\n\tPerform a dry run build"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  update:\n\tFormat and update flake inputs"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  upgrade:\n\tFormat and switch to the new Home Manager configuration"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  rollback:\n\tRollback to a previous generation"
@@ -26,7 +26,7 @@ pkgs: [
     ${pkgs.statix}/bin/statix fix -i **/hardware-configuration.nix .
   '')
 
-  (pkgs.writeShellScriptBin "test" ''
+  (pkgs.writeShellScriptBin "vm-build" ''
     ${pkgs.nixos-rebuild}/bin/nixos-rebuild build-vm-with-bootloader --flake .
   '')
 
