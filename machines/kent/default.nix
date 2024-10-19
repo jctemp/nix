@@ -14,7 +14,7 @@
       bluetoothSupport = false;
     };
     rendering = {
-      renderer = null;
+      renderer = false;
       nvidia = false;
       opengl = true;
     };

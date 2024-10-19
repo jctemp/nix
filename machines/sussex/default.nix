@@ -14,11 +14,10 @@
       bluetoothSupport = true;
     };
     rendering = {
-      renderer = "gnome";
+      renderer = true;
       nvidia = true;
       opengl = true;
     };
-
     privacy = {
       enable = true;
       supportYubikey = true;

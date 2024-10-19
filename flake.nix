@@ -19,19 +19,22 @@
     {
       nixosConfigurations = lib.hosts.merge [
         (lib.hosts.create {
-          inherit inputs users ulib;
+          inherit inputs ulib;
+          users = users.personal;
           system = "x86_64-linux";
           hostName = "sussex";
           stateVersion = "23.11";
         })
         (lib.hosts.create {
-          inherit inputs users ulib;
+          inherit inputs ulib;
+          users = users.personal;
           system = "x86_64-linux";
           hostName = "cornwall";
           stateVersion = "23.11";
         })
         (lib.hosts.create {
-          inherit inputs users ulib;
+          inherit inputs ulib;
+          users = users.server;
           system = "x86_64-linux";
           hostName = "kent";
           stateVersion = "23.11";

@@ -13,10 +13,10 @@
 in {
   options.module.rendering = {
     renderer = lib.mkOption {
-      default = "gnome";
-      defaultText = "gnome";
-      description = "Which renderer to use for user interface.";
-      type = lib.types.nullOr (lib.types.enum ["gnome"]);
+      default = true;
+      defaultText = "true";
+      description = "Whether to enable a renderer for a user interface.";
+      type = lib.types.bool;
     };
     nvidia = lib.mkOption {
       default = false;
@@ -33,7 +33,7 @@ in {
   };
 
   config = lib.mkMerge [
-    (lib.mkIf (cfg.renderer == "gnome") {
+    (lib.mkIf cfg.renderer {
       programs.dconf.enable = true;
 
       services = {
