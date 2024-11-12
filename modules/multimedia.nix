@@ -37,7 +37,11 @@ in {
 
         printing = {
           enable = true;
-          drivers = [pkgs.gutenprint];
+          drivers = [
+            pkgs.gutenprint
+            pkgs.epson-escpr
+            pkgs.epson-escpr2
+          ];
           browsing = true;
           browsedConf = ''
             BrowseDNSSDSubTypes _cups,_print
