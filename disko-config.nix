@@ -1,83 +1,117 @@
-{device, ...} : {
+{
   disko.devices = {
     disk = {
       main = {
-        inherit device;
         type = "disk";
+        device = "to-be-filled-during-installation";
         content = {
           type = "gpt";
           partitions = {
-            ESP = {
+            efi = {
               size = "1G";
               type = "EF00";
               content = {
                 type = "filesystem";
                 format = "vfat";
-                mountpoint = "/boot";
+                mountpoint = "/boot/esp";
                 mountOptions = ["umask=0077"];
               };
             };
-            root = {
-              size = "-20G";
+            bpool = {
+              size = "4G";
+              content = {
+                type = "zfs";
+                pool = "bpool";
+              };
+            };
+            rpool = {
+              end = "-4G";
               content = {
                 type = "zfs";
                 pool = "rpool";
               };
             };
-            encryptedSwap = {
-              size = "10M";
-              content = {
-                type = "swap";
-                randomEncryption = true;
-                priority = 100;
-              };
-            };
-            plainSwap = {
-              size = "1G";
-              content = {
-                type = "swap";
-                discardPolicy = "both";
-                resumeDevice = true;
-              };
+            bios = {
+              size = "1M";
+              type = "EF02";
             };
           };
         };
       };
     };
-    # https://github.com/nix-community/disko/blob/master/lib/types/zpool.nix
     zpool = {
-      rpool = {
+      bpool = {
         type = "zpool";
-        mode = "";
-        options.cachefile = "none";
-        rootFsOptions = {
-          ashift = 12;
+        mountpoint = "/boot";
+        options = {
+          ashift = "12";
           autotrim = "on";
+          compatibility = "grub2";
+        };
+        rootFsOptions = {
           acltype = "posixacl";
           canmount = "off";
           compression = "zstd";
           dnodesize = "auto";
-          nbmand = "on";
           normalization = "formD";
-          mountpoint = "none";
           relatime = "on";
-          snapdir = "visible";
           xattr = "sa";
+          "com.sun:auto-snapshot" = "false";
         };
-        mountpoint = "/";
-        postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^zroot@blank$' || zfs snapshot zroot@blank";
         datasets = {
-          nix = {
+          nixos = {
             type = "zfs_fs";
-            mountpoint = "/nix";
+            options.mountpoint = "none";
           };
-          home = {
+          "nixos/root" = {
             type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/boot";
+          };
+        };
+      };
+      rpool = {
+        type = "zpool";
+        mountpoint = "/";
+        options = {
+          ashift = "12";
+          autotrim = "on";
+        };
+        rootFsOptions = {
+          acltype = "posixacl";
+          canmount = "off";
+          compression = "zstd";
+          dnodesize = "auto";
+          normalization = "formD";
+          relatime = "on";
+          xattr = "sa";
+          "com.sun:auto-snapshot" = "false";
+        };
+        datasets = {
+          nixos = {
+            type = "zfs_fs";
+            options.mountpoint = "none";
+          };
+          "nixos/root" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/";
+            postCreateHook = "zfs snapshot rpool/nixos/root@empty";
+          };
+          "nixos/home" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
             mountpoint = "/home";
           };
-          persist = {
+          "nixos/persist" = {
             type = "zfs_fs";
+            options.mountpoint = "legacy";
             mountpoint = "/persist";
+          };
+          "nixos/nix" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/nix";
           };
         };
       };

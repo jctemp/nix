@@ -35,7 +35,7 @@ in {
           forceInstall = true;
           efiSupport = true;
           configurationLimit = 5;
-          zfsSupport = config.module.zfs.enable;
+          zfsSupport = true;
           inherit (cfg) device;
         };
 

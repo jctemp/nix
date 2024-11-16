@@ -12,6 +12,7 @@ nixpkgs: rec {
         inherit (args) system;
         specialArgs = args;
         modules = [
+          args.inputs.disko.nixosModules.disko
           "${args.inputs.self}/modules"
           "${args.inputs.self}/machines/${args.hostName}"
           "${args.inputs.self}/disko-config.nix"
