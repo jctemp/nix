@@ -31,13 +31,6 @@
       enable = true;
       kubernetes = null;
     };
-    zfs = {
-      enable = true;
-      root = {
-        enable = true;
-        rollback = ["rpool/local/root@blank"];
-      };
-    };
   };
 
   # Nvidia Optimus

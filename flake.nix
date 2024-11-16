@@ -9,6 +9,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
     flake-utils.url = "github:numtide/flake-utils";
     nix-hardware.url = "github:NixOS/nixos-hardware";
+    disko = {
+      url = "github:nix-community/disko/latest";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs: let
@@ -24,6 +28,7 @@
           system = "x86_64-linux";
           hostName = "sussex";
           stateVersion = "23.11";
+          device = "/dev/nvme0n1";
         })
         (lib.hosts.create {
           inherit inputs ulib;
@@ -31,6 +36,7 @@
           system = "x86_64-linux";
           hostName = "cornwall";
           stateVersion = "23.11";
+          device = "/dev/nvme0n1";
         })
         (lib.hosts.create {
           inherit inputs ulib;
@@ -38,6 +44,7 @@
           system = "x86_64-linux";
           hostName = "kent";
           stateVersion = "23.11";
+          device = "/dev/sda";
         })
       ];
     }
