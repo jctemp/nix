@@ -1,9 +1,9 @@
-{
+{device,...}:{
   disko.devices = {
     disk = {
       main = {
+        inherit device;
         type = "disk";
-        device = "to-be-filled-during-installation";
         content = {
           type = "gpt";
           partitions = {
