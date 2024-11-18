@@ -20,6 +20,16 @@ nixpkgs: rec {
             users.users = users.createUsers args.users;
             nixpkgs.config.allowUnfree = config.module.rendering.nvidia;
             system.stateVersion = args.stateVersion;
+            virtualisation.vmVariantWithBootLoader = {
+              diskSize = 20480;
+              memorySize = 8192;
+              cores = 2;
+            };
+            virtualisation.vmVariant = {
+              diskSize = 20480;
+              memorySize = 8192;
+              cores = 2;
+            };
           })
         ];
       };

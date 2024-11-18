@@ -44,7 +44,7 @@ in {
           configurationLimit = 5;
         };
       };
-      loader.efi.canTouchEfiVariables = true;
+      loader.efi.canTouchEfiVariables = cfg.loader == "systemd";
       supportedFilesystems = [
         "btrfs"
         "reiserfs"

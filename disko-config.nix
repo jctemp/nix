@@ -1,75 +1,65 @@
-{device,...}:{
+# We have to set the `imageSize` for testing. Otherwise, the allocated
+# disk is too small for partitioning, leading to alignment issues.
+# References:
+# - https://github.com/nix-community/disko/blob/master/docs/disko-images.md
+# - https://github.com/nix-community/disko/blob/master/lib/types/disk.nix
+{device, ...}:
+{
   disko.devices = {
     disk = {
       main = {
         inherit device;
+        imageName = "nixos-disko-root-zfs";
+        imageSize = "32G";
         type = "disk";
         content = {
           type = "gpt";
           partitions = {
-            efi = {
-              size = "1G";
+            boot = {
+              label = "BOOT";
+              size = "1M";
+              type = "EF02"; # for GRUB MBR
+            };
+            esp = {
+              label = "EFI";
+              size = "2G";
               type = "EF00";
               content = {
                 type = "filesystem";
                 format = "vfat";
-                mountpoint = "/boot/esp";
-                mountOptions = ["umask=0077"];
+                mountpoint = "/boot";
+                mountOptions = [ "umask=0077" ];
               };
             };
-            bpool = {
+            encryptedSwap = {
+              size = "128M";
+              content = {
+                type = "swap";
+                randomEncryption = true;
+                priority = 100; # prefer to encrypt as long as we have space for it
+              };
+            };
+            swap = {
               size = "4G";
               content = {
-                type = "zfs";
-                pool = "bpool";
+                type = "swap";
+                discardPolicy = "both";
+                resumeDevice = true;
               };
             };
-            rpool = {
-              end = "-4G";
+            root = {
+              size = "100%";
               content = {
                 type = "zfs";
                 pool = "rpool";
               };
             };
-            bios = {
-              size = "1M";
-              type = "EF02";
-            };
           };
         };
       };
     };
+
     zpool = {
-      bpool = {
-        type = "zpool";
-        mountpoint = "/boot";
-        options = {
-          ashift = "12";
-          autotrim = "on";
-          compatibility = "grub2";
-        };
-        rootFsOptions = {
-          acltype = "posixacl";
-          canmount = "off";
-          compression = "zstd";
-          dnodesize = "auto";
-          normalization = "formD";
-          relatime = "on";
-          xattr = "sa";
-          "com.sun:auto-snapshot" = "false";
-        };
-        datasets = {
-          nixos = {
-            type = "zfs_fs";
-            options.mountpoint = "none";
-          };
-          "nixos/root" = {
-            type = "zfs_fs";
-            options.mountpoint = "legacy";
-            mountpoint = "/boot";
-          };
-        };
-      };
       rpool = {
         type = "zpool";
         mountpoint = "/";
@@ -80,38 +70,49 @@
         rootFsOptions = {
           acltype = "posixacl";
           canmount = "off";
-          compression = "zstd";
           dnodesize = "auto";
           normalization = "formD";
           relatime = "on";
           xattr = "sa";
-          "com.sun:auto-snapshot" = "false";
+          compression = "zstd";
         };
         datasets = {
-          nixos = {
+          local = {
             type = "zfs_fs";
             options.mountpoint = "none";
           };
-          "nixos/root" = {
+          "local/root" = {
             type = "zfs_fs";
             options.mountpoint = "legacy";
             mountpoint = "/";
-            postCreateHook = "zfs snapshot rpool/nixos/root@empty";
+            postCreateHook = ''
+              zfs list -t snapshot -H -o name | grep -E '^rpool/local/root@blank$' \
+              || zfs snapshot rpool/local/root@blank
+            '';
           };
-          "nixos/home" = {
+          "local/nix" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/nix";
+          };
+          safe = {
+            type = "zfs_fs";
+            options.mountpoint = "none";
+          };
+          "safe/config" = {
+            type = "zfs_fs";
+            options.mountpoint = "legacy";
+            mountpoint = "/etc/nixos";
+          };
+          "safe/home" = {
             type = "zfs_fs";
             options.mountpoint = "legacy";
             mountpoint = "/home";
           };
-          "nixos/persist" = {
+          "safe/persist" = {
             type = "zfs_fs";
             options.mountpoint = "legacy";
             mountpoint = "/persist";
-          };
-          "nixos/nix" = {
-            type = "zfs_fs";
-            options.mountpoint = "legacy";
-            mountpoint = "/nix";
           };
         };
       };

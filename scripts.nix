@@ -5,10 +5,11 @@ pkgs: [
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  check:\n\tRun statix and deadnix"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  mend:\n\tAttempt to automatically fix issues found by statix"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  vm-build:\n\tPerform a dry run build"
+    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  vm-test:\n\tTest unattended install"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  update:\n\tFormat and update flake inputs"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  upgrade:\n\tFormat and switch to the new Home Manager configuration"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  rollback:\n\tRollback to a previous generation"
-    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  Delete:\n\tDelete previous generations"
+    ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  delete:\n\tDelete previous generations"
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  clean:\n\tRemove result symlink and other build artifacts"
   '')
 
@@ -24,6 +25,11 @@ pkgs: [
 
   (pkgs.writeShellScriptBin "mend" ''
     ${pkgs.statix}/bin/statix fix -i **/hardware-configuration.nix .
+  '')
+
+  (pkgs.writeShellScriptBin "vm-test" ''
+    host=$(${pkgs.uutils-coreutils-noprefix}/bin/hostname)
+    ${pkgs.nix}/bin/nix build .#nixosConfigurations.''${host}.config.system.build.diskoImagesScript && ./result
   '')
 
   (pkgs.writeShellScriptBin "vm-build" ''

@@ -56,7 +56,7 @@
     in {
       formatter = pkgs.alejandra;
       devShells.default = pkgs.mkShellNoCC {
-        packages = import "${inputs.self}/scripts.nix" pkgs;
+        packages = (import "${inputs.self}/scripts.nix" pkgs) ++ [pkgs.jq];
         shellHook = "overview";
       };
     }));

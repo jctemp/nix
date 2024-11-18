@@ -1,13 +1,13 @@
-{...}: {
+{device, ...}: {
   imports = [
     ./hardware-configuration.nix
   ];
 
   module = {
     boot = {
+      inherit device;
       canTouchEfiVariables = false;
       loader = "grub";
-      device = "/dev/sda";
     };
     multimedia = {
       enable = false;
