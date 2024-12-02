@@ -13,6 +13,21 @@ pkgs: [
     ${pkgs.uutils-coreutils-noprefix}/bin/echo -e "  clean:\n\tRemove result symlink and other build artifacts"
   '')
 
+  (pkgs.writeShellScriptBin "remote" ''
+    if [ $# -ne 2 ];then
+      ${pkgs.uutils-coreutils-noprefix}/bin/echo "Usage:"
+      ${pkgs.uutils-coreutils-noprefix}/bin/echo "  install <host> <target>"
+      exit 1
+    fi
+
+    host=$1
+    target=$2
+
+    ${pkgs.nix}/bin/nix run github:nix-community/nixos-anywhere -- \
+      --generate-hardware-config nixos-generate-config ./machines/''${host}/hardware-configuration.nix \
+      --flake ".#''${host}" "root@''${target}"
+  '')
+
   (pkgs.writeShellScriptBin "fmt" ''
     ${pkgs.nix}/bin/nix fmt --no-write-lock-file
   '')
