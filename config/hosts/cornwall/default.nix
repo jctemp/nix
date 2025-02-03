@@ -2,34 +2,29 @@
   pkgs,
   inputs,
   ...
-}: {
+}:
+{
   imports = [
     inputs.nix-hardware.nixosModules.microsoft-surface-common
-    ./hardware-configuration.nix
   ];
 
-  module = {
-    boot = {
-      canTouchEfiVariables = true;
-      loader = "systemd";
-      device = "";
-    };
-    multimedia = {
-      enable = true;
-      bluetoothSupport = true;
-    };
-    rendering = {
-      renderer = true;
-      nvidia = true;
-      opengl = true;
-    };
-    privacy = {
-      enable = true;
-      supportYubikey = true;
-    };
-    virtualisation = {
-      enable = true;
-      kubernetes = null;
+  hostSpec = {
+    device = "/dev/nvme0n1";
+    loader = "systemd";
+    isMinimal = false;
+    modules = {
+      # server required modules
+      virtualisation.enable = true;
+      gnupg.enable = true;
+      ssh.enable = true;
+      sshd.enable = true;
+      yubikey.enable = true;
+      # non-server modules
+      printing.enable = true;
+      audio.enable = true;
+      bluetooth.enable = true;
+      graphics.enable = true;
+      nvidia.enable = true;
     };
   };
 

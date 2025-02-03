@@ -4,13 +4,23 @@
 # - https://github.com/nix-community/disko/blob/master/docs/disko-images.md
 # - https://github.com/nix-community/disko/blob/master/lib/types/disk.nix
 {
+  inputs,
   config,
   lib,
   pkgs,
-  device,
   ...
 }:
+let
+  device = config.hostSpec.device;
+  _ = lib.assertMsg builtins.isString device "device must be a string";
+in
 {
+  imports = [
+    inputs.disko.nixosModules.disko
+    inputs.nixos-facter-modules.nixosModules.facter
+    inputs.impermanence.nixosModules.impermanence
+  ];
+
   boot = {
     kernelPackages = lib.mkForce pkgs.linuxPackages;
     supportedFilesystems = [ "zfs" ];
@@ -30,20 +40,39 @@
     trim.interval = "weekly";
   };
 
-  environment.etc = {
-    "NetworkManager/system-connections" = {
-      source = "/persist/etc/NetworkManager/system-connections/";
-    };
+  environment.persistence."/persist" = {
+    enable = true;
+    hideMounts = true;
+    directories = [
+      "/var/lib/bluetooth"
+      "/var/lib/systemd/coredump"
+      "/var/lib/nixos"
+      "/etc/NetworkManager/system-connections"
+      "/etc/nixos"
+      "/etc/ssh"
+    ];
   };
 
-  systemd.tmpfiles.rules =
-    if config.module.multimedia.bluetoothSupport then
-      [
-        # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
-        "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
-      ]
-    else
-      [ ];
+  # need to set manually here because disko does not have this flag
+  fileSystems."/persist".neededForBoot = true;
+
+  # environment.etc = {
+  #   "NetworkManager/system-connections" = {
+  #     source = "/persist/etc/NetworkManager/system-connections/";
+  #   };
+  #   "nixos" = {
+  #     source = "/persist/etc/nixos";
+  #   };
+  #   "ssh" = {
+  #     source = "/persist/etc/ssh";
+  #   };
+  # };
+
+  # systemd.tmpfiles.rules = lib.mkIf config.hostSpec.modules.bluetooth.enable [
+  #   # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
+  #   "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
+  # ];
+  facter.reportPath = ./facter.json;
 
   disko.devices = {
     disk = {
