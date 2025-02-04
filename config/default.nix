@@ -10,6 +10,7 @@ let
         "${inputs.self}/config/hosts/${hostName}"
         "${inputs.self}/config/modules.nix"
         "${inputs.self}/config/disko.nix"
+        "${inputs.self}/config/users.nix"
         (
           {  ... }:
           {

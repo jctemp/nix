@@ -11,6 +11,7 @@
   ...
 }:
 let
+  loader-type = config.hostSpec.loader;
   device = config.hostSpec.device;
   _ = lib.assertMsg builtins.isString device "device must be a string";
 in
@@ -18,12 +19,46 @@ in
   imports = [
     inputs.disko.nixosModules.disko
     inputs.nixos-facter-modules.nixosModules.facter
-    inputs.impermanence.nixosModules.impermanence
+    # inputs.impermanence.nixosModules.impermanence
   ];
 
   boot = {
     kernelPackages = lib.mkForce pkgs.linuxPackages;
-    supportedFilesystems = [ "zfs" ];
+
+    loader = {
+      grub = lib.mkIf (loader-type == "grub") {
+        enable = true;
+        forceInstall = true;
+        efiSupport = true;
+        configurationLimit = 5;
+        zfsSupport = true;
+        inherit device;
+      };
+
+      systemd-boot = lib.mkIf (loader-type == "systemd") {
+        enable = true;
+        configurationLimit = 5;
+      };
+
+      efi.canTouchEfiVariables = loader-type == "systemd";
+    };
+
+    supportedFilesystems = [
+      "btrfs"
+      "reiserfs"
+      "vfat"
+      "f2fs"
+      "xfs"
+      "ntfs"
+      "cifs"
+      "zfs"
+    ];
+
+    binfmt.emulatedSystems = [
+      "x86_64-windows"
+      "aarch64-linux"
+    ];
+
     initrd.postDeviceCommands = lib.mkAfter (
       builtins.concatStringsSep "; " (
         lib.map (sn: "zfs rollback -r ${sn}") [
@@ -40,39 +75,33 @@ in
     trim.interval = "weekly";
   };
 
-  environment.persistence."/persist" = {
-    enable = true;
-    hideMounts = true;
-    directories = [
-      "/var/lib/bluetooth"
-      "/var/lib/systemd/coredump"
-      "/var/lib/nixos"
-      "/etc/NetworkManager/system-connections"
-      "/etc/nixos"
-      "/etc/ssh"
-    ];
-  };
+  # environment.persistence."/persist" = {
+  #   enable = true;
+  #   hideMounts = true;
+  #   directories = [
+  #     "/var/lib/bluetooth"
+  #     "/var/lib/systemd/coredump"
+  #     "/var/lib/nixos"
+  #     "/etc/NetworkManager/system-connections"
+  #     "/etc/nixos"
+  #     "/etc/ssh"
+  #   ];
+  # };
 
   # need to set manually here because disko does not have this flag
   fileSystems."/persist".neededForBoot = true;
+  facter.reportPath = "${inputs.self}/config/hosts/${config.hostSpec.hostName}/facter.json";
 
-  # environment.etc = {
-  #   "NetworkManager/system-connections" = {
-  #     source = "/persist/etc/NetworkManager/system-connections/";
-  #   };
-  #   "nixos" = {
-  #     source = "/persist/etc/nixos";
-  #   };
-  #   "ssh" = {
-  #     source = "/persist/etc/ssh";
-  #   };
-  # };
+  environment.etc = {
+    "NetworkManager/system-connections" = {
+      source = "/persist/etc/NetworkManager/system-connections/";
+    };
+  };
 
-  # systemd.tmpfiles.rules = lib.mkIf config.hostSpec.modules.bluetooth.enable [
-  #   # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
-  #   "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
-  # ];
-  facter.reportPath = ./facter.json;
+  systemd.tmpfiles.rules = lib.mkIf config.hostSpec.modules.bluetooth.enable [
+    # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
+    "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
+  ];
 
   disko.devices = {
     disk = {

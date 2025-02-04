@@ -13,8 +13,6 @@ in
 lib.mkMerge [
   (
     let
-      loader-type = config.hostSpec.loader;
-      _ = lib.assertMsg ((lib.typeOf loader-type) == lib.types.str) "Not string";
     in
     {
       nix = {
@@ -31,40 +29,6 @@ lib.mkMerge [
           keep-outputs = true;
           trusted-users = [ "@wheel" ];
         };
-      };
-
-      boot = {
-        loader = {
-          grub = lib.mkIf (loader-type == "grub") {
-            enable = true;
-            forceInstall = true;
-            efiSupport = true;
-            configurationLimit = 5;
-            zfsSupport = true;
-          };
-
-          systemd-boot = lib.mkIf (loader-type == "systemd") {
-            enable = true;
-            configurationLimit = 5;
-          };
-
-          efi.canTouchEfiVariables = loader-type == "systemd";
-        };
-
-        supportedFilesystems = [
-          "btrfs"
-          "reiserfs"
-          "vfat"
-          "f2fs"
-          "xfs"
-          "ntfs"
-          "cifs"
-        ];
-
-        binfmt.emulatedSystems = [
-          "x86_64-windows"
-          "aarch64-linux"
-        ];
       };
 
       # NETWORKING (group = networkmanager)
@@ -368,11 +332,22 @@ lib.mkMerge [
         enable = true;
         openFirewall = true;
         settings = {
-          KbdInteractiveAuthentication = true;
-          PasswordAuthentication = true;
-          PermitRootLogin = "yes";
-          X11Forwarding = true;
+          KbdInteractiveAuthentication = false;
+          PasswordAuthentication = false;
+          PermitRootLogin = "no";
+          X11Forwarding = false;
         };
+        hostKeys = [
+          {
+            path = "/persist/ssh/ssh_host_ed25519_key";
+            type = "ed25519";
+          }
+          {
+            path = "/persist/ssh/ssh_host_rsa_key";
+            type = "rsa";
+            bits = 4096;
+          }
+        ];
       };
     }
   )

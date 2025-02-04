@@ -2,7 +2,7 @@
 let
   user = {
     name = "tmpl";
-    password = "$y$j9T$3p69Y8VnzNo6piNHJ6GKs.$2tdeDO3cnBwiYmnrMArqR141wtKEv9rlCrAtJwfv23A";
+    hashedPassword = "$y$j9T$ED2wTBe5BM1TISOGYdgS11$AkWjWs4kiI0n3kYdlUiuPC33m0aWXV/PK63U7n4Z823";
     keys =
       [
       ];
@@ -10,12 +10,9 @@ let
   checkGroups = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
 in
 {
-  users.mutableUsers = true;
-
   users.users.${user.name} = {
-    inherit (user) name;
+    inherit (user) name hashedPassword;
     isNormalUser = true;
-    hashedPassword = user.password;
     openssh.authorizedKeys.keys = user.keys;
     extraGroups =
       [
@@ -36,16 +33,15 @@ in
 
   systemd.tmpfiles.rules =
     let
-      user = config.users.users.${user.name}.name;
-      group = config.users.users.${user.name}.group;
+      u = config.users.users.${user.name}.name;
+      g = config.users.users.${user.name}.group;
     in
     [
-      "d /home/${user.name}/.ssh 0750 ${user} ${group} -"
-      "d /home/${user.name}/.ssh/sockets 0750 ${user} ${group} -"
+      "d /home/${user.name}/.ssh 0750 ${u} ${g} -"
+      "d /home/${user.name}/.ssh/sockets 0750 ${u} ${g} -"
     ];
 
   users.users.root = {
-    hashedPasswordFile = config.users.users.${user.name}.hashedPasswordFile;
     hashedPassword = config.users.users.${user.name}.hashedPassword;
     openssh.authorizedKeys.keys = config.users.users.${user.name}.openssh.authorizedKeys.keys;
   };

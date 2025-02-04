@@ -37,6 +37,10 @@
           packages = [
             pkgs.nix
             pkgs.git
+            pkgs.disko
+            pkgs.nixos-anywhere
+            pkgs.nixos-facter
+            pkgs.python3
           ];
         };
       }
