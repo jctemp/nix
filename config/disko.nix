@@ -13,13 +13,14 @@
 let
   loader-type = config.hostSpec.loader;
   device = config.hostSpec.device;
+  safe_path = config.hostSpec.safe_path;
   _ = lib.assertMsg builtins.isString device "device must be a string";
 in
 {
   imports = [
     inputs.disko.nixosModules.disko
     inputs.nixos-facter-modules.nixosModules.facter
-    # inputs.impermanence.nixosModules.impermanence
+    inputs.impermanence.nixosModules.impermanence
   ];
 
   boot = {
@@ -75,33 +76,39 @@ in
     trim.interval = "weekly";
   };
 
-  # environment.persistence."/persist" = {
-  #   enable = true;
-  #   hideMounts = true;
-  #   directories = [
-  #     "/var/lib/bluetooth"
-  #     "/var/lib/systemd/coredump"
-  #     "/var/lib/nixos"
-  #     "/etc/NetworkManager/system-connections"
-  #     "/etc/nixos"
-  #     "/etc/ssh"
-  #   ];
-  # };
-
-  # need to set manually here because disko does not have this flag
-  fileSystems."/persist".neededForBoot = true;
-  facter.reportPath = "${inputs.self}/config/hosts/${config.hostSpec.hostName}/facter.json";
-
-  environment.etc = {
-    "NetworkManager/system-connections" = {
-      source = "/persist/etc/NetworkManager/system-connections/";
-    };
+  environment.persistence.${safe_path} = {
+    enable = true;
+    hideMounts = true;
+    directories =
+      [
+        "/var/lib/systemd/coredump"
+        "/var/lib/nixos"
+        "/etc/NetworkManager/system-connections"
+      ]
+      ++ (
+        if config.hostSpec.modules.bluetooth.enable then
+          [
+            "/var/lib/bluetooth"
+          ]
+        else
+          [ ]
+      );
   };
 
-  systemd.tmpfiles.rules = lib.mkIf config.hostSpec.modules.bluetooth.enable [
-    # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
-    "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
-  ];
+  # need to set manually here because disko does not have this flag
+  fileSystems.${safe_path}.neededForBoot = true;
+  facter.reportPath = "${inputs.self}/config/hosts/${config.hostSpec.hostName}/facter.json";
+
+  # environment.etc = {
+  #   "NetworkManager/system-connections" = {
+  #     source = "/persist/etc/NetworkManager/system-connections/";
+  #   };
+  # };
+
+  # systemd.tmpfiles.rules = [
+  #   # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
+  #   "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
+  # ];
 
   disko.devices = {
     disk = {
@@ -205,7 +212,7 @@ in
           "safe/persist" = {
             type = "zfs_fs";
             options.mountpoint = "legacy";
-            mountpoint = "/persist";
+            mountpoint = safe_path;
           };
         };
       };

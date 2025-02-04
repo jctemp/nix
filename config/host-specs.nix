@@ -17,6 +17,11 @@
       description = "Type of loader for system boot";
       default = "systemd";
     };
+    safe_path = lib.mkOption {
+      type = lib.types.str;
+      description = "The base directory for persistence";
+      default = "/persist";
+    };
     isMinimal = lib.mkOption {
       type = lib.types.bool;
       default = false;

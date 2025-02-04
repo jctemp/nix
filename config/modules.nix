@@ -321,6 +321,7 @@ lib.mkMerge [
   (
     let
       enableSshd = config.hostSpec.modules.sshd.enable;
+      safe_path = config.hostSpec.safe_path;
       _ = assertBool "config.hostSpec.modules.sshd.enable" enableSshd;
       enable = enableSshd;
     in
@@ -339,11 +340,11 @@ lib.mkMerge [
         };
         hostKeys = [
           {
-            path = "/persist/ssh/ssh_host_ed25519_key";
+            path = "${safe_path}/ssh/ssh_host_ed25519_key";
             type = "ed25519";
           }
           {
-            path = "/persist/ssh/ssh_host_rsa_key";
+            path = "${safe_path}/ssh/ssh_host_rsa_key";
             type = "rsa";
             bits = 4096;
           }
