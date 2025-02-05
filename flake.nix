@@ -34,13 +34,12 @@
         formatter = pkgs.alejandra;
         devShells.default = pkgs.mkShellNoCC {
           name = "system config";
-          packages = [
+          packages = let 
+            scriptsPkgs = pkgs.callPackage ./scripts {};
+          in[
+            scriptsPkgs
             pkgs.nix
             pkgs.git
-            pkgs.disko
-            pkgs.nixos-anywhere
-            pkgs.nixos-facter
-            pkgs.python3
           ];
         };
       }
