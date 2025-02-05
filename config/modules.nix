@@ -86,12 +86,7 @@ lib.mkMerge [
       pkgs.libertine
       pkgs.roboto
       pkgs.noto-fonts
-      (pkgs.nerdfonts.override {
-        fonts = [
-          "UbuntuMono"
-          "UbuntuSans"
-        ];
-      })
+      pkgs.nerdfonts
     ];
   }
 
