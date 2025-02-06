@@ -362,6 +362,13 @@ lib.mkMerge [
       services.pcscd.enable = enable;
       services.yubikey-agent.enable = enable;
       programs.yubikey-touch-detector.enable = enable;
+      environment.systemPackages = lib.mkIf enable [
+        pkgs.yubico-piv-tool
+        pkgs.yubikey-manager
+        pkgs.yubikey-personalization
+        pkgs.yubikey-touch-detector
+        pkgs.pcsctools
+      ];
     }
   )
 ]
