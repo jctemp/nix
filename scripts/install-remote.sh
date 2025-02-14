@@ -94,10 +94,6 @@ if [ -z "$ssh_address" ]; then
     validation_errors+=("SSH address is required (use -a or --address)")
 fi
 
-if [ ! -d "$configuration_path" ]; then
-    validation_errors+=("Configuration path '$configuration_path' does not exist")
-fi
-
 if [ ${#validation_errors[@]} -ne 0 ]; then
     cli_error "Incorrect or missing arguments"
     for error in "${validation_errors[@]}"; do

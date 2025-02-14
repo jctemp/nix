@@ -68,10 +68,6 @@ if [ -z "$configuration_name" ]; then
     validation_errors+=("Configuration name is required (use -n or --name)")
 fi
 
-if [ ! -d "$configuration_path" ]; then
-    validation_errors+=("Configuration path '$configuration_path' does not exist")
-fi
-
 if [ ${#validation_errors[@]} -ne 0 ]; then
     cli_error "Incorrect or missing arguments"
     for error in "${validation_errors[@]}"; do
