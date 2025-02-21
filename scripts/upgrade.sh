@@ -4,10 +4,13 @@ set -o errexit  # Exit on error
 set -o nounset  # Exit on unset variables
 set -o pipefail # Exit on pipe failures
 
+# shellcheck disable=2086
+dir=$(dirname "$(readlink -f $0)");
+
 # shellcheck source=/dev/null
-source ./argument_parser.sh
+source "$dir/argument_parser.sh"
 # shellcheck source=/dev/null
-source ./logging.sh
+source "$dir/logging.sh"
 
 ### CLI
 
