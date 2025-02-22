@@ -32,23 +32,10 @@
         type = lib.types.bool;
         default = false;
       };
-      gnupg.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-      ssh.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
       sshd.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
       };
-      yubikey.enable = lib.mkOption {
-        type = lib.types.bool;
-        default = false;
-      };
-
       printing.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
