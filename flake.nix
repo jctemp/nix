@@ -7,7 +7,6 @@
       "flakes"
     ];
   };
-
   inputs = {
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
     disko = {
@@ -20,23 +19,20 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
   };
 
-  outputs =
-    inputs:
+  outputs = inputs:
     {
-      nixosConfigurations = import ./config inputs;
+      nixosConfigurations = (import ./config inputs);
     }
     // (inputs.flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import inputs.nixpkgs { inherit system; };
-      in
-      {
+      system: let
+        pkgs = import inputs.nixpkgs {inherit system;};
+      in {
         formatter = pkgs.alejandra;
         devShells.default = pkgs.mkShellNoCC {
           name = "system config";
-          packages = let 
+          packages = let
             scriptsPkgs = pkgs.callPackage ./scripts {};
-          in[
+          in [
             scriptsPkgs
             pkgs.nix
             pkgs.git

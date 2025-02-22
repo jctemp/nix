@@ -1,7 +1,5 @@
-{ pkgs, ... }:
-let
-  buildShellScript =
-    name:
+{pkgs, ...}: let
+  buildShellScript = name:
     pkgs.stdenv.mkDerivation {
       inherit name;
       src = ./.;
@@ -13,11 +11,11 @@ let
       '';
     };
 in
-pkgs.symlinkJoin {
-  name = "scripts";
-  paths = [
-    (buildShellScript "install-remote")
-    (buildShellScript "install-local")
-    (buildShellScript "upgrade")
-  ];
-}
+  pkgs.symlinkJoin {
+    name = "scripts";
+    paths = [
+      (buildShellScript "install-remote")
+      (buildShellScript "install-local")
+      (buildShellScript "upgrade")
+    ];
+  }
