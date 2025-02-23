@@ -65,18 +65,31 @@ in
     }
 
     {
-      environment.systemPackages = [
-        pkgs.gnupg
+      environment = let
+        init = ''
+          export GPG_TTY="$(tty)"
+          gpg-connect-agent /bye
+          export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+          gpgconf --launch gpg-agent
+        '';
+      in {
+        shellInit = init;
+        interactiveShellInit = init;
 
-        pkgs.yubioath-flutter
-        pkgs.yubikey-manager
-        pkgs.yubikey-personalization
-        pkgs.pcsctools
+        systemPackages = [
+          pkgs.gnupg
+          pkgs.libfido2
 
-        (pkgs.writeShellScriptBin "reset-gpg-yubikey" ''
-          ${pkgs.gnupg}/bin/gpg-connect-agent "scd serialno" "learn --force" /bye
-        '')
-      ];
+          pkgs.yubioath-flutter
+          pkgs.yubikey-manager
+          pkgs.yubikey-personalization
+          pkgs.pcsctools
+
+          (pkgs.writeShellScriptBin "reset-gpg-yubikey" ''
+            ${pkgs.gnupg}/bin/gpg-connect-agent "scd serialno" "learn --force" /bye
+          '')
+        ];
+      };
 
       programs = {
         # Filesystem in Userspace; secure method for non privileged users to
@@ -89,32 +102,19 @@ in
           settings = {
             default-cache-ttl = 60;
             max-cache-ttl = 120;
+            ttyname = "$GPG_TTY";
           };
         };
         yubikey-touch-detector.enable = true;
+        ssh.startAgent = false;
       };
 
       services = {
-        udev.packages = [pkgs.yubikey-personalization];
+        udev = {
+          enable = true;
+          packages = [pkgs.yubikey-personalization];
+        };
         pcscd.enable = true;
-      };
-
-      security.polkit = {
-        enable = true;
-        extraConfig = ''
-          polkit.addRule(function(action, subject) {
-            if (action.id == "org.debian.pcsc-lite.access_card" &&
-              subject.isInGroup("wheel")) {
-                return polkit.Result.YES;
-              }
-          });
-          polkit.addRule(function(action, subject) {
-            if (action.id == "org.debian.pcsc-lite.access_pcsc" &&
-              subject.isInGroup("wheel")) {
-                return polkit.Result.YES;
-              }
-          });
-        '';
       };
     }
 
