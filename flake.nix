@@ -21,7 +21,7 @@
 
   outputs = inputs:
     {
-      nixosConfigurations = (import ./config inputs);
+      nixosConfigurations = import ./config inputs;
     }
     // (inputs.flake-utils.lib.eachDefaultSystem (
       system: let

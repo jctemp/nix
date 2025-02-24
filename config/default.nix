@@ -11,7 +11,7 @@ inputs: let
         "${inputs.self}/config/user.nix"
         (
           {...}: {
-            hostSpec = { inherit hostName system; };
+            hostSpec = {inherit hostName system;};
             system.stateVersion = "24.11";
           }
         )
