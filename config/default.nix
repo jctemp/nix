@@ -1,42 +1,35 @@
-inputs:
-let
-  mkHost =
-    hostName:
+inputs: let
+  mkHost = hostName: system:
     inputs.nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      specialArgs = { inherit inputs; };
+      inherit system;
+      specialArgs = {inherit inputs;};
       modules = [
-        "${inputs.self}/config/host-specs.nix"
-        "${inputs.self}/config/hosts/${hostName}"
-        "${inputs.self}/config/modules.nix"
+        "${inputs.self}/config/modules"
+        "${inputs.self}/config/hosts"
+        "${inputs.self}/config/hosts/${system}.${hostName}"
         "${inputs.self}/config/disko.nix"
-        "${inputs.self}/config/users.nix"
+        "${inputs.self}/config/user.nix"
         (
-          {  ... }:
-          {
-            # Set hostName for hostSpecs
-            hostSpec.hostName = hostName;
-
-            # Define state version
+          {...}: {
+            hostSpec = { inherit hostName system; };
             system.stateVersion = "24.11";
-
-            # Options for VM testing
-            virtualisation.vmVariantWithBootLoader = {
-              diskSize = 32768;
-              memorySize = 8192;
-              cores = 2;
-            };
-            virtualisation.vmVariant = {
-              diskSize = 32768;
-              memorySize = 8192;
-              cores = 2;
-            };
           }
         )
       ];
     };
-  mkHosts =
-    hosts: builtins.foldl' (configs: hostName: configs // { ${hostName} = mkHost hostName; }) { } hosts;
-  readHosts = path: builtins.attrNames (builtins.readDir path);
+  mkHosts = hosts: builtins.foldl' (configs: host: configs // {${host.name} = mkHost host.name host.system;}) {} hosts;
+  readHosts = path: let
+    lib = inputs.nixpkgs.lib;
+    readed = builtins.readDir path;
+    filtered = builtins.filter (name: readed.${name} == "directory") (builtins.attrNames readed);
+    mapped = builtins.map (name: lib.strings.splitString "." name) filtered;
+    result =
+      builtins.map (tuple: {
+        system = builtins.head tuple;
+        name = lib.last tuple;
+      })
+      mapped;
+  in
+    result;
 in
-mkHosts (readHosts "${inputs.self}/config/hosts")
+  mkHosts (readHosts "${inputs.self}/config/hosts")

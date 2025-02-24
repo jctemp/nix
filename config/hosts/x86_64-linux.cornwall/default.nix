@@ -2,8 +2,7 @@
   pkgs,
   inputs,
   ...
-}:
-{
+}: {
   imports = [
     inputs.nix-hardware.nixosModules.microsoft-surface-common
   ];
@@ -11,18 +10,23 @@
   hostSpec = {
     device = "/dev/nvme0n1";
     loader = "systemd";
-    isMinimal = false;
-    modules = {
-      # server required modules
-      virtualisation.enable = true;
-      sshd.enable = true;
-      # non-server modules
+  };
+  modules = {
+    security.yubikey.enable = true;
+    services = {
       printing.enable = true;
+      sshd.enable = true;
+    };
+    hardware = {
       audio.enable = true;
       bluetooth.enable = true;
-      graphics.enable = true;
       nvidia.enable = true;
     };
+    virtualisation = {
+      containers.enable = true;
+      libvirt.enable = true;
+    };
+    desktop.enable = true;
   };
 
   # Nvidia Optimus

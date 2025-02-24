@@ -9,14 +9,11 @@
   lib,
   pkgs,
   ...
-}:
-let
-  loader-type = config.hostSpec.loader;
+}: let
+  loaderType = config.hostSpec.loader;
   device = config.hostSpec.device;
-  safe_path = config.hostSpec.safe_path;
-  _ = lib.assertMsg builtins.isString device "device must be a string";
-in
-{
+  safePath = config.hostSpec.safePath;
+in {
   imports = [
     inputs.disko.nixosModules.disko
     inputs.nixos-facter-modules.nixosModules.facter
@@ -27,7 +24,7 @@ in
     kernelPackages = lib.mkForce pkgs.linuxPackages;
 
     loader = {
-      grub = lib.mkIf (loader-type == "grub") {
+      grub = lib.mkIf (loaderType == "grub") {
         enable = true;
         forceInstall = true;
         efiSupport = true;
@@ -36,12 +33,12 @@ in
         inherit device;
       };
 
-      systemd-boot = lib.mkIf (loader-type == "systemd") {
+      systemd-boot = lib.mkIf (loaderType == "systemd") {
         enable = true;
         configurationLimit = 5;
       };
 
-      efi.canTouchEfiVariables = loader-type == "systemd";
+      efi.canTouchEfiVariables = loaderType == "systemd";
     };
 
     supportedFilesystems = [
@@ -76,7 +73,7 @@ in
     trim.interval = "weekly";
   };
 
-  environment.persistence.${safe_path} = {
+  environment.persistence.${safePath} = {
     enable = true;
     hideMounts = true;
     directories =
@@ -86,29 +83,17 @@ in
         "/etc/NetworkManager/system-connections"
       ]
       ++ (
-        if config.hostSpec.modules.bluetooth.enable then
-          [
-            "/var/lib/bluetooth"
-          ]
-        else
-          [ ]
+        if config.modules.hardware.bluetooth.enable
+        then [
+          "/var/lib/bluetooth"
+        ]
+        else []
       );
   };
 
   # need to set manually here because disko does not have this flag
-  fileSystems.${safe_path}.neededForBoot = true;
-  facter.reportPath = "${inputs.self}/config/hosts/${config.hostSpec.hostName}/facter.json";
-
-  # environment.etc = {
-  #   "NetworkManager/system-connections" = {
-  #     source = "/persist/etc/NetworkManager/system-connections/";
-  #   };
-  # };
-
-  # systemd.tmpfiles.rules = [
-  #   # https://www.freedesktop.org/software/systemd/man/latest/tmpfiles.d.html
-  #   "L /var/lib/bluetooth - - - - /persist/var/lib/bluetooth"
-  # ];
+  fileSystems.${safePath}.neededForBoot = true;
+  facter.reportPath = "${inputs.self}/config/hosts/${config.hostSpec.system}.${config.hostSpec.hostName}/facter.json";
 
   disko.devices = {
     disk = {
@@ -133,7 +118,7 @@ in
                 type = "filesystem";
                 format = "vfat";
                 mountpoint = "/boot";
-                mountOptions = [ "umask=0077" ];
+                mountOptions = ["umask=0077"];
               };
             };
             encryptedSwap = {
@@ -212,7 +197,7 @@ in
           "safe/persist" = {
             type = "zfs_fs";
             options.mountpoint = "legacy";
-            mountpoint = safe_path;
+            mountpoint = safePath;
           };
         };
       };
