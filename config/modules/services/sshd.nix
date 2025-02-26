@@ -15,8 +15,13 @@
     services.openssh = {
       enable = true;
       openFirewall = true;
+      banner = ''
+        █▄ █ █ ▀▄▀ █▀█ █▀▀
+        █ ▀█ █ █ █ █▄█ ▄▄█
+        ${config.system.stateVersion}
+      '';
       settings = {
-        KbdInteractiveAuthentication = false;
+        KbdInteractiveAuthentication = true;
         PasswordAuthentication = false;
         PermitRootLogin = "no";
         X11Forwarding = false;

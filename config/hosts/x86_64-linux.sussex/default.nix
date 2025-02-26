@@ -8,6 +8,7 @@ _: {
     services = {
       printing.enable = true;
       sshd.enable = true;
+      fail2ban.enable = false;
     };
     hardware = {
       audio.enable = true;
