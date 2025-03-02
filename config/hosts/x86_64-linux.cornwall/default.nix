@@ -17,6 +17,23 @@
       printing.enable = true;
       sshd.enable = true;
       fail2ban.enable = false;
+      llm = {
+        enable = true;
+        acceleration = null;
+        port = 4242;
+      };
+      stirling = {
+        enable = true;
+        port = 3256;
+      };
+      routing = {
+        enable = true;
+        local = {
+          ollama = 4242;
+          stirling = 3256;
+        };
+        extraConfig = "";
+      };
     };
     hardware = {
       audio.enable = true;

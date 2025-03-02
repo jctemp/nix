@@ -13,11 +13,7 @@
   };
 
   config = lib.mkIf config.modules.hardware.nvidia.enable {
-    nixpkgs.config.allowUnfreePredicate = pkg:
-      builtins.elem (lib.getName pkg) [
-        "nvidia-x11"
-        "nvidia-settings"
-      ];
+    nixpkgs.config.allowUnfree = true;
 
     hardware.nvidia = {
       open = false;

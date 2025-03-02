@@ -26,6 +26,7 @@ in {
         "libvirt"
         "git"
         "networkmanager"
+        "ollama"
         # printing and scanning"
         "scanner"
         "lp"

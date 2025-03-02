@@ -9,6 +9,21 @@ _: {
       printing.enable = false;
       sshd.enable = true;
       fail2ban.enable = true;
+      llm = {
+        enable = false;
+        acceleration = null;
+        port = 4242;
+      };
+      stirling = {
+        enable = false;
+        port = 3256;
+      };
+      routing = {
+        enable = false;
+        local = {
+        };
+        extraConfig = "";
+      };
     };
     hardware = {
       audio.enable = false;
