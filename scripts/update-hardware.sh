@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-local.sh: Install NixOS configuration locally
+# update-hardware.sh: Update hardware configuration for a NixOS system
 
 set -o errexit  # Exit on error
 set -o nounset  # Exit on unset variables
@@ -20,7 +20,7 @@ VERBOSE=0              # Default to non-verbose mode
 # ---- Usage information ----
 print_usage() {
   cat << EOF
-$(basename "${BASH_SOURCE[0]}") - Install NixOS configuration locally
+$(basename "${BASH_SOURCE[0]}") - Update hardware configuration for a NixOS system
 
 USAGE:
   $(basename "${BASH_SOURCE[0]}") [OPTIONS]
@@ -33,7 +33,7 @@ OPTIONS:
 
 EXAMPLES:
   $(basename "${BASH_SOURCE[0]}") --name desktop
-  $(basename "${BASH_SOURCE[0]}") --path /path/to/config --name vm
+  $(basename "${BASH_SOURCE[0]}") --path /path/to/config --name laptop
 EOF
 }
 
@@ -63,13 +63,10 @@ validate_args() {
   return 0
 }
 
-# ---- Main function ----
+# Main function
 main() {
-  log_info "Starting local NixOS installation"
+  log_info "Starting hardware configuration update"
   
-  # Verify running as root
-  check_root
-
   # Parse command line arguments
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -116,48 +113,33 @@ main() {
   validate_args || { print_usage; exit 1; }
 
   # Build paths
-  local flake_uri="${configuration_path}#${configuration_name}"
-  local facter_path="./hosts/${configuration_name}/facter.json"
+  local facter_path="${configuration_path}/hosts/${configuration_name}/facter.json"
   
   log_debug "Configuration path: ${configuration_path}"
   log_debug "Configuration name: ${configuration_name}"
-  log_debug "Flake URI: ${flake_uri}"
   log_debug "Facter path: ${facter_path}"
 
+  # Create host directory if it doesn't exist
+  local host_dir="${configuration_path}/hosts/${configuration_name}"
+  if [[ ! -d "$host_dir" ]]; then
+    log_info "Creating host directory: ${host_dir}"
+    mkdir -p "$host_dir"
+  fi
+
+  # Backup existing facter.json if it exists
+  if [[ -f "$facter_path" ]]; then
+    local backup_path="${facter_path}.backup-$(date +%Y%m%d%H%M%S)"
+    log_info "Backing up existing facter.json to ${backup_path}"
+    cp "$facter_path" "$backup_path"
+  fi
+
   # Generate hardware configuration JSON
-  log_info "Generating hardware configuration"
+  log_info "Generating hardware configuration with nixos-facter"
   nix run \
     --experimental-features "nix-command flakes" \
     nixpkgs#nixos-facter -- -o "${facter_path}"
-  log_success "Hardware configuration generated"
-
-  # Run disko partitioning
-  log_info "Running disk partitioning with disko"
-  nix run \
-    --experimental-features "nix-command flakes" \
-    nixpkgs#disko -- --mode disko --flake "${flake_uri}"
-  log_success "Disk partitioning completed"
-
-  # Install NixOS
-  log_info "Installing NixOS system"
-  nixos-install -v --show-trace --no-root-passwd\
-    --flake "${flake_uri}" 
-  log_success "NixOS installation completed"
-
-  # Finalizing
-  log_info "Finalizing installation"
-  cd /
-  umount -Rl "/mnt"
-  zpool export -a
-  log_success "Installation completed successfully"
-
-  # Prompt for reboot
-  if confirm_action "Would you like to reboot now?"; then
-    log_info "Rebooting system..."
-    reboot
-  else
-    log_info "You can reboot manually when ready using the 'reboot' command"
-  fi
+    
+  log_success "Hardware configuration updated successfully at ${facter_path}"
 }
 
 # Run the main function
