@@ -57,6 +57,7 @@
       hardware.bluetooth = {
         enable = true;
         powerOnBoot = true;
+        settings = {General = {Enable = "Source,Sink,Media,Socket";};};
       };
 
       # Bluetooth audio enhancements if audio is also enabled
