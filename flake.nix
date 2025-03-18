@@ -20,10 +20,6 @@
     # Hardware support
     nix-hardware.url = "github:NixOS/nixos-hardware";
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
-    nixos-wsl = {
-      url = "github:nix-community/NixOS-WSL/main";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     # Utils
     # sops-nix = {
@@ -67,9 +63,6 @@
         inputs.nix-hardware.nixosModules.microsoft-surface-common
       ];
       vm = mkSystem "vm" "x86_64-linux" [];
-      wsl = mkSystem "wsl" "x86_64-linux" [
-        inputs.nixos-wsl.nixosModules.default
-      ];
     };
 
     # Development utilities

@@ -1,13 +1,4 @@
-{
-  pkgs,
-  inputs,
-  ...
-}: {
-  # Import hardware-specific modules
-  imports = [
-    inputs.nix-hardware.nixosModules.microsoft-surface-common
-  ];
-
+{pkgs, ...}: {
   # Host specification for disk setup
   modules.hostSpec = {
     device = "/dev/nvme0n1";
