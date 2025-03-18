@@ -9,7 +9,6 @@ This repository contains NixOS configurations for multiple systems:
 - **desktop**: Full desktop configuration with GNOME
 - **laptop**: Laptop configuration with Microsoft Surface optimizations
 - **vm**: Minimal VM configuration 
-- **wsl**: Windows Subsystem for Linux configuration
 
 ## Structure
 
