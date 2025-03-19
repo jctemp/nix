@@ -57,21 +57,16 @@
       hardware.bluetooth = {
         enable = true;
         powerOnBoot = true;
-        settings = {General = {Enable = "Source,Sink,Media,Socket";};};
-      };
-
-      # Bluetooth audio enhancements if audio is also enabled
-      services.pipewire.wireplumber.extraConfig.bluetoothEnhancements =
-        lib.mkIf
-        config.modules.hardware.audio.enable
-        {
-          "monitor.bluez.properties" = {
-            "bluez5.enable-sbc-xq" = true;
-            "bluez5.enable-msbc" = true;
-            "bluez5.enable-hw-volume" = true;
-            "bluez5.roles" = ["hsp_hs" "hsp_ag" "hfp_hf" "hfp_ag"];
+        settings = {
+          General = {
+            Enable = "Source,Sink,Media,Socket";
+            Experimental = "true";
+            KernelExperimental = "true";
+            ReconnectAttempts = "7";
+            ReconnectIntervals = "1,2,4,8,16,32,64";
           };
         };
+      };
     })
 
     # NVIDIA configuration
