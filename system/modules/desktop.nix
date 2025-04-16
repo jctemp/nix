@@ -60,22 +60,10 @@
     {
       environment.systemPackages = with pkgs;
         [
-          # Common desktop applications
-          firefox
-          thunderbird
           libreoffice
-
-          # File management
-          xfce.thunar
           nautilus
-          file-roller
-
-          # Media
           vlc
           gimp
-
-          # System tools
-          gnome-system-monitor
           pavucontrol
         ]
         ++ config.modules.desktop.extraPackages;
