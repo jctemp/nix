@@ -1,8 +1,69 @@
-{pkgs, ...}: {
+{
+  inputs,
+  pkgs,
+  ...
+}: let
+  # Define language server packages
+  lsp = {
+    python = {
+      pylsp = pkgs.python3Packages.python-lsp-server;
+      ruff = pkgs.python3Packages.python-lsp-ruff;
+    };
+    rust = pkgs.rust-analyzer;
+    zig = pkgs.zls;
+    c-cpp = pkgs.clang-tools;
+    docker = pkgs.dockerfile-language-server-nodejs;
+    bash = pkgs.nodePackages.bash-language-server;
+    markdown = pkgs.marksman;
+    typst = pkgs.tinymist;
+    nix = pkgs.nixd;
+  };
+
+  # Define formatter packages (fmt.python = pkgs.ruff remains correct)
+  fmt = {
+    python = pkgs.ruff; # Keep ruff for formatting
+    rust = pkgs.rustfmt;
+    c-cpp = pkgs.clang-tools;
+    bash = pkgs.shfmt;
+    typst = pkgs.typstyle;
+    zig = pkgs.zig;
+    nix = pkgs.alejandra;
+  };
+in {
   home = {
     username = "tmpl";
     homeDirectory = "/home/tmpl";
     stateVersion = "24.11";
+    file = {
+      ".gnupg/gpg.conf" = {
+        text = ''
+          personal-cipher-preferences AES256 AES192 AES
+          personal-digest-preferences SHA512 SHA384 SHA256
+          personal-compress-preferences ZLIB BZIP2 ZIP Uncompressed
+          default-preference-list SHA512 SHA384 SHA256 AES256 AES192 AES ZLIB BZIP2 ZIP Uncompressed
+          cert-digest-algo SHA512
+          s2k-digest-algo SHA512
+          s2k-cipher-algo AES256
+          charset utf-8
+          no-comments
+          no-emit-version
+          no-greeting
+          keyid-format 0xlong
+          list-options show-uid-validity
+          verify-options show-uid-validity
+          with-fingerprint
+          require-cross-certification
+          no-symkey-cache
+          armor
+          use-agent
+          throw-keyids
+        '';
+      };
+      ".gnupg/scdaemon.conf" = {
+        enable = true;
+        text = "disable-ccid";
+      };
+    };
   };
 
   programs.home-manager.enable = true;
@@ -18,7 +79,7 @@
   programs.starship = {
     enable = true;
     enableBashIntegration = true;
-    settings = {}; # TODO: integrate toml configuration
+    settings = builtins.fromTOML (builtins.readFile "${inputs.self}/home/settings/starship.toml");
   };
   programs.git = {
     enable = true;
@@ -26,6 +87,20 @@
     userEmail = "jamie.c.temple@gmail.com";
     signing.key = "6A89175BB28B8B81";
     signing.signByDefault = true;
+  };
+  programs.gitui = {
+    enable = true;
+    keyConfig = ''
+      (
+          move_left: Some(( code: Char('h'), modifiers: "")),
+          move_right: Some(( code: Char('l'), modifiers: "")),
+          move_up: Some(( code: Char('k'), modifiers: "")),
+          move_down: Some(( code: Char('j'), modifiers: "")),
+          stash_open: Some(( code: Char('l'), modifiers: "")),
+          open_help: Some(( code: F(1), modifiers: "")),
+          status_reset_item: Some(( code: Char('U'), modifiers: "SHIFT")),
+      )
+    '';
   };
   programs.direnv = {
     enable = true;
@@ -42,13 +117,13 @@
         true-color = true;
         rulers = [80 120];
         color-modes = true;
-        end-of-line-diagnostic = "hint";
+        end-of-line-diagnostics = "hint";
       };
-      editor.inline-diagnostic = {
+      editor.inline-diagnostics = {
         cursor-line = "error";
-        other-line = "disable";
+        other-lines = "disable";
       };
-      editor.indent-guide = {
+      editor.indent-guides = {
         character = "╎";
         render = true;
       };
@@ -57,6 +132,127 @@
         display-messages = true;
         display-inlay-hints = true;
       };
+    };
+    languages = {
+      language-server = {
+        pylsp = {
+          command = "${lsp.python.pylsp}/bin/pylsp";
+          config = {
+            pylsp = {
+              plugins = {
+                ruff = {enabled = true;};
+              };
+            };
+          };
+        };
+        rust-analyzer = {command = "${lsp.rust}/bin/rust-analyzer";};
+        zls = {command = "${lsp.zig}/bin/zls";};
+        clangd = {command = "${lsp.c-cpp}/bin/clangd";};
+        docker-langserver = {
+          command = "${lsp.docker}/bin/docker-langserver";
+          args = ["--stdio"];
+        };
+        bash-language-server = {
+          command = "${lsp.bash}/bin/bash-language-server";
+          args = ["start"];
+        };
+        marksman = {
+          command = "${lsp.markdown}/bin/marksman";
+          # args = ["server"]; # Often not needed, marksman detects stdio mode
+        };
+        tinymist = {command = "${lsp.typst}/bin/tinymist";};
+        nixd = {command = "${lsp.nix}/bin/nixd";};
+      };
+
+      language = let
+        c-cpp-formatter = {
+          command = "${fmt.c-cpp}/bin/clang-format";
+          args = ["-style=file" "-assume-filename=%f"];
+        };
+      in [
+        {
+          name = "python";
+          language-servers = ["pylsp"];
+          formatter = {
+            command = "${fmt.python}/bin/ruff"; # fmt.python points to pkgs.ruff
+            args = ["format" "--silent" "-"];
+          };
+          auto-format = true;
+        }
+        {
+          name = "rust";
+          language-servers = ["rust-analyzer"];
+          formatter = {
+            command = "${fmt.rust}/bin/rustfmt";
+          };
+          # Add settings from your reference
+          # persistent-diagnostic-sources = [ ... ]; # Requires careful path handling if needed
+          auto-format = true;
+        }
+        {
+          name = "zig";
+          language-servers = ["zls"];
+          formatter = {
+            command = "${fmt.zig}/bin/zig";
+            args = ["fmt" "--stdin"];
+          };
+          auto-format = true; # LSP often handles this via 'zig fmt'
+        }
+        {
+          name = "c";
+          language-servers = ["clangd"];
+          formatter = c-cpp-formatter; # Use the shared formatter config
+          auto-format = true;
+        }
+        {
+          name = "cpp";
+          language-servers = ["clangd"];
+          formatter = c-cpp-formatter; # Use the shared formatter config
+          auto-format = true;
+        }
+        {
+          name = "dockerfile";
+          language-servers = ["docker-langserver"];
+          auto-format = false; # No standard formatter applied
+        }
+        {
+          name = "bash";
+          language-servers = ["bash-language-server"];
+          formatter = {
+            command = "${fmt.bash}/bin/shfmt";
+          };
+          auto-format = true;
+        }
+        {
+          name = "markdown";
+          language-servers = ["marksman"];
+          auto-format = false;
+        }
+        {
+          name = "typst";
+          language-servers = ["tinymist"];
+          formatter = {
+            command = "${fmt.typst}/bin/typstyle";
+            args = ["format" "-"];
+          };
+          auto-format = true;
+        }
+        {
+          name = "nix";
+          language-servers = ["nixd"];
+          formatter = {command = "${fmt.nix}/bin/alejandra";};
+          auto-format = true;
+        }
+      ];
+    };
+  };
+  programs.zellij = {
+    enable = true;
+    enableBashIntegration = true;
+    settings = {
+      simplified_ui = true;
+      copy_command = "${pkgs.xclip}/bin/xclip -sel clipboard";
+      theme = "catppuccin-macchiato";
     };
   };
   programs.ghostty = {
@@ -71,6 +267,25 @@
     enable = true;
     package = pkgs.google-chrome;
   };
+  programs.vscode = {
+    enable = true;
+    package = pkgs.vscodium;
+    profiles.default.userSettings = {
+      "editor.inlayHints.enabled" = "on";
+      "editor.rulers" = [80 120];
+      "telemetry.telemetryLevel" = "off";
+      "telemetry.enableCrashReporter" = false;
+      "telemetry.enableTelemetry" = false;
+      "workbench.colorTheme" = "Catppuccin Macchiato";
+      "workbench.iconTheme" = "catppuccin-macchiato";
+      "workbench.sideBar.location" = "right";
+      "terminal.integrated.cwd" = "${pkgs.bashInteractive}/bin/bash";
+    };
+    profiles.default.extensions = with pkgs; [
+      vscode-extensions.catppuccin.catppuccin-vsc
+      vscode-extensions.catppuccin.catppuccin-vsc-icons
+    ];
+  };
   home.packages = with pkgs; [
     # CLI tools
     htop
@@ -84,5 +299,30 @@
     zotero
     blender_4_3
     freecad
+
+    # LSPs
+    lsp.python.pylsp
+    lsp.python.ruff
+    lsp.rust
+    lsp.zig
+    lsp.c-cpp # Provides clangd
+    lsp.docker
+    lsp.bash
+    lsp.markdown
+    lsp.typst # tinymist
+
+    # Formatters / Tools providing formatters
+    fmt.python # ruff
+    fmt.rust # rustfmt
+    fmt.bash # shfmt
+    fmt.typst # typstyle
+    fmt.zig # zig itself
+
+    # Dependencies
+    pkgs.nodejs
+
+    # Jupyter support (core packages)
+    pkgs.python3Packages.jupyter-core
+    pkgs.python3Packages.ipykernel
   ];
 }
