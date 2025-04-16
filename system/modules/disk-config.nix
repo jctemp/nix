@@ -107,7 +107,7 @@ in {
     # Facter configuration
     {
       # Set the facter report path
-      facter.reportPath = "${inputs.self}/hosts/${config.networking.hostName}/facter.json";
+      facter.reportPath = "${inputs.self}/system/hosts/${config.networking.hostName}/facter.json";
     }
 
     # Disko disk configuration

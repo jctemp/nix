@@ -1,7 +1,4 @@
-{
-  ...
-}: {
-
+{...}: {
   # Host specification for disk setup
   modules.hostSpec = {
     device = "/dev/nvme0n1";

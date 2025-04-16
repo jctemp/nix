@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  userName,
   ...
 }: let
   # Default user configuration
   defaultUser = {
-    name = "tmpl";
+    name = userName;
     hashedPassword = "$y$j9T$ED2wTBe5BM1TISOGYdgS11$AkWjWs4kiI0n3kYdlUiuPC33m0aWXV/PK63U7n4Z823";
     keys = [
       "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAINi9Ncchcw9R08/jKb6VrgBBvSs78vW9sKUi3Pj5cTiSAAAAEnNzaDphdXRoZW50aWNhdGlvbg== ssh:key-auth-a"

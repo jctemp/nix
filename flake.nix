@@ -7,42 +7,39 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    nixpkgs-unstable.url = "github:NixOs/nixpkgs/nixos-unstable";
 
-    # Disk management
+    # System configuration dependencies
     disko = {
       url = "github:nix-community/disko/latest";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # State management
     impermanence.url = "github:nix-community/impermanence";
-
-    # Hardware support
     nix-hardware.url = "github:NixOS/nixos-hardware";
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
 
-    # Utils
-    # sops-nix = {
-    #   url = "github:Mic92/sops-nix";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    # Home configuration dependencies
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    blender-bin.url = "github:edolstra/nix-warez?dir=blender";
   };
 
   outputs = inputs: let
     # Helper function to create a NixOS system
-    mkSystem = hostName: system: extraModules:
+    mkSystem = hostName: userName: system: extraModules:
       inputs.nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {inherit inputs;};
+        specialArgs = {inherit inputs userName;};
         modules =
           [
-            ./lib
-            ./modules
-            ./hosts/${hostName}
+            ./system/modules
+            ./system/hosts/${hostName}
 
             # Common configurations
-            ./modules/disk-config.nix
-            ./modules/user-config.nix
+            ./system/modules/disk-config.nix
+            ./system/modules/user-config.nix
 
             # System state version
             ({...}: {
@@ -52,17 +49,40 @@
           ]
           ++ extraModules;
       };
+
+    mkHome = userName: system: extraModules:
+      inputs.home-manager.lib.homeManagerConfiguration {
+        pkgs = import inputs.nixpkgs-unstable {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [inputs.blender-bin.overlays.default];
+        };
+        extraSpecialArgs = {
+          inherit inputs;
+        };
+        modules =
+          [
+            ./home/users/${userName}.nix
+          ]
+          ++ extraModules;
+      };
+
     # Generate various system versions
     mkEach = systems: func:
       inputs.nixpkgs.lib.genAttrs systems (system: func system);
     mkEachDefault = mkEach ["x86_64-linux"];
   in {
     nixosConfigurations = {
-      desktop = mkSystem "desktop" "x86_64-linux" [];
-      laptop = mkSystem "laptop" "x86_64-linux" [
+      desktop = mkSystem "desktop" "tmpl" "x86_64-linux" [];
+      laptop = mkSystem "laptop" "tmpl" "x86_64-linux" [
         inputs.nix-hardware.nixosModules.microsoft-surface-common
       ];
-      vm = mkSystem "vm" "x86_64-linux" [];
+      vm = mkSystem "vm" "tmpl-cli" "x86_64-linux" [];
+    };
+
+    homeConfigurations = {
+      "tmpl" = mkHome "tmpl" "x86_64-linux" [];
+      "tmpl-cli" = mkHome "tmpl-cli" "x86_64-linux" [];
     };
 
     # Development utilities
@@ -75,7 +95,7 @@
           packages = [
             pkgs.nix
             pkgs.git
-            pkgs.nixfmt
+            pkgs.alejandra
           ];
         };
     });

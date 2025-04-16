@@ -1,4 +1,8 @@
-{pkgs, lib, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: {
   # Host specification for disk setup
   modules.hostSpec = {
     device = "/dev/sda";
