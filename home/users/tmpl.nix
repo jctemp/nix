@@ -271,19 +271,98 @@ in {
     enable = true;
     package = pkgs.vscodium;
     profiles.default.userSettings = {
+      # --- General settings
       "editor.inlayHints.enabled" = "on";
       "editor.rulers" = [80 120];
-      "telemetry.telemetryLevel" = "off";
-      "telemetry.enableCrashReporter" = false;
-      "telemetry.enableTelemetry" = false;
       "workbench.colorTheme" = "Catppuccin Macchiato";
       "workbench.iconTheme" = "catppuccin-macchiato";
       "workbench.sideBar.location" = "right";
       "terminal.integrated.cwd" = "${pkgs.bashInteractive}/bin/bash";
+      "editor.formatOnSave" = true;
+
+      # --- Telemetry ---
+      "telemetry.telemetryLevel" = "off";
+      "telemetry.enableCrashReporter" = false;
+      "telemetry.enableTelemetry" = false;
+
+      # --- Languages ---
+      "[python]" = {
+        "editor.defaultFormatter" = "charliermarsh.ruff";
+        "terminal.activateEnvironment" = true;
+      };
+      "[rust]" = {
+        "editor.defaultFormatter" = "rust-lang.rust-analyzer";
+      };
+      "[c]" = {
+        "editor.defaultFormatter" = "llvm.clangd";
+      };
+      "[cpp]" = {
+        "editor.defaultFormatter" = "llvm.clangd";
+      };
+      "[shellscript]" = {
+        "editor.defaultFormatter" = "foxundermoon.shell-format";
+      };
+      "[typst]" = {
+        "editor.defaultFormatter" = "nvarner.typst-lsp";
+      };
+      "[zig]" = {
+        "editor.defaultFormatter" = "ziglang.vscode-zig";
+      };
+      "[nix]" = {
+        "editor.defaultFormatter" = "jnoortheen.nix-ide";
+        "nix.formatterPath" = "${fmt.nix}/bin/alejandra";
+      };
+      # You might want to disable formatOnSave for markdown
+      "[markdown]" = {
+        "editor.formatOnSave" = false;
+      };
     };
     profiles.default.extensions = with pkgs; [
+      # --- Themes ---
       vscode-extensions.catppuccin.catppuccin-vsc
       vscode-extensions.catppuccin.catppuccin-vsc-icons
+
+      # --- Languages ---
+      # Python
+      vscode-extensions.charliermarsh.ruff
+      vscode-extensions.ms-pyright.pyright
+      vscode-extensions.ms-python.python
+      vscode-extensions.ms-toolsai.jupyter
+      vscode-extensions.ms-toolsai.jupyter-keymap
+      vscode-extensions.ms-toolsai.jupyter-renderers
+      vscode-extensions.ms-toolsai.vscode-jupyter-cell-tags
+      vscode-extensions.ms-toolsai.vscode-jupyter-slideshow
+
+      # Rust
+      vscode-extensions.rust-lang.rust-analyzer
+
+      # Zig
+      vscode-extensions.ziglang.vscode-zig
+
+      # C/C++
+      vscode-extensions.ms-vscode.cmake-tools
+      vscode-extensions.llvm-vs-code-extensions.vscode-clangd
+
+      # Dockerfiles
+      vscode-extensions.ms-azuretools.vscode-docker
+
+      # Bash/Shell script
+      vscode-extensions.mads-hartmann.bash-ide-vscode
+      vscode-extensions.foxundermoon.shell-format
+      vscode-extensions.timonwong.shellcheck
+
+      # Markdown
+      vscode-extensions.yzhang.markdown-all-in-one
+
+      # Typst (LSP via tinymist, formatting via typstyle)
+      vscode-extensions.myriad-dreamin.tinymist
+
+      # Nix (LSP via nixd, Formatting via alejandra)
+      vscode-extensions.jnoortheen.nix-ide
+
+      # --- Other Extensions ---
+      vscode-extensions.ms-vscode-remote.remote-ssh
+      vscode-extensions.ms-vsliveshare.vsliveshare
     ];
   };
   home.packages = with pkgs; [
