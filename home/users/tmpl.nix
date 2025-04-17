@@ -277,13 +277,17 @@ in {
       "workbench.colorTheme" = "Catppuccin Macchiato";
       "workbench.iconTheme" = "catppuccin-macchiato";
       "workbench.sideBar.location" = "right";
-      "terminal.integrated.cwd" = "${pkgs.bashInteractive}/bin/bash";
+      "terminal.integrated.profiles.linux" = {
+        "bash" = {
+          "path" = "${pkgs.bashInteractive}/bin/bash";
+          "icon" = "terminal-bash";
+        };
+      };
+      "terminal.integrated.defaultProfile.linux" = "bash";
       "editor.formatOnSave" = true;
 
       # --- Telemetry ---
       "telemetry.telemetryLevel" = "off";
-      "telemetry.enableCrashReporter" = false;
-      "telemetry.enableTelemetry" = false;
 
       # --- Languages ---
       "[python]" = {
@@ -294,28 +298,29 @@ in {
         "editor.defaultFormatter" = "rust-lang.rust-analyzer";
       };
       "[c]" = {
-        "editor.defaultFormatter" = "llvm.clangd";
+        "editor.defaultFormatter" = "llvm-vs-code-extensions.vscode-clangd";
       };
       "[cpp]" = {
-        "editor.defaultFormatter" = "llvm.clangd";
+        "editor.defaultFormatter" = "llvm-vs-code-extensions.vscode-clangd";
       };
       "[shellscript]" = {
         "editor.defaultFormatter" = "foxundermoon.shell-format";
       };
       "[typst]" = {
-        "editor.defaultFormatter" = "nvarner.typst-lsp";
+        "editor.defaultFormatter" = "myriad-dreamin.tinymist";
       };
       "[zig]" = {
         "editor.defaultFormatter" = "ziglang.vscode-zig";
       };
       "[nix]" = {
         "editor.defaultFormatter" = "jnoortheen.nix-ide";
-        "nix.formatterPath" = "${fmt.nix}/bin/alejandra";
       };
-      # You might want to disable formatOnSave for markdown
       "[markdown]" = {
         "editor.formatOnSave" = false;
       };
+      "nix.formatterPath" = "alejandra";
+      "nix.serverPath" = "nixd";
+      "python.terminal.activateEnvironment" = true;
     };
     profiles.default.extensions = with pkgs; [
       # --- Themes ---
@@ -389,6 +394,7 @@ in {
     lsp.bash
     lsp.markdown
     lsp.typst # tinymist
+    lsp.nix
 
     # Formatters / Tools providing formatters
     fmt.python # ruff
@@ -396,6 +402,7 @@ in {
     fmt.bash # shfmt
     fmt.typst # typstyle
     fmt.zig # zig itself
+    fmt.nix
 
     # Dependencies
     pkgs.nodejs
