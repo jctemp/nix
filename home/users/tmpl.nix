@@ -253,6 +253,7 @@ in {
       simplified_ui = true;
       copy_command = "${pkgs.xclip}/bin/xclip -sel clipboard";
       theme = "catppuccin-macchiato";
+      show_startup_tips = false;
     };
   };
   programs.ghostty = {
