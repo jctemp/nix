@@ -1,146 +1,130 @@
 #!/usr/bin/env bash
-# update-hardware.sh: Update hardware configuration for a NixOS system
 
 set -o errexit  # Exit on error
 set -o nounset  # Exit on unset variables
 set -o pipefail # Exit on pipe failures
 
-# Get script directory for loading dependencies
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
-# Load common functions
-# shellcheck source=./common-functions.sh
-source "${SCRIPT_DIR}/common-functions.sh"
+# shellcheck source=./lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=./lib/nix-utils.sh
+source "${SCRIPT_DIR}/lib/nix-utils.sh"
 
-# ---- Script configuration ----
-configuration_path="." # Default value
-configuration_name=""  # Required
-VERBOSE=0              # Default to non-verbose mode
+setup_error_trap on_error
 
-# ---- Usage information ----
+# ==============================================================================
+# Script arguments
+
+flake_uri="" # Will be parsed into path and host_name
+VERBOSE=0    # Default to non-verbose mode
+
+# ==============================================================================
+# CLI parsing
 print_usage() {
-  cat << EOF
+	cat <<EOF
 $(basename "${BASH_SOURCE[0]}") - Update hardware configuration for a NixOS system
 
 USAGE:
-  $(basename "${BASH_SOURCE[0]}") [OPTIONS]
+  $(basename "${BASH_SOURCE[0]}") --flake <flake_uri> [OPTIONS]
 
 OPTIONS:
-  -p, --path PATH         Configuration path (default: ".")
-  -n, --name NAME         Configuration name (required)
+  -f, --flake FLAKE_URI   Flake URI pointing to the configuration (e.g., '.#desktop' or '/path/to/config#laptop')
+                          (The script will look for ./system/hosts/<host_name>/ within the path part of the URI)
   -v, --verbose           Print verbose output
   -h, --help              Print this help message
 
 EXAMPLES:
-  $(basename "${BASH_SOURCE[0]}") --name desktop
-  $(basename "${BASH_SOURCE[0]}") --path /path/to/config --name laptop
+  $(basename "${BASH_SOURCE[0]}") --flake .#desktop
+  $(basename "${BASH_SOURCE[0]}") --flake /path/to/my/nixconfig#laptop
 EOF
 }
 
-# Function to validate arguments
-validate_args() {
-  local -a errors=()
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	-f | --flake)
+		if [[ $# -gt 1 ]]; then
+			flake_uri="$2"
+			shift 2
+		else
+			log_error "Missing value for $1"
+			print_usage
+			exit 1
+		fi
+		;;
+	-v | --verbose)
+		VERBOSE=1
+		log_debug "Verbose mode enabled."
+		shift
+		;;
+	-h | --help)
+		print_usage
+		exit 0
+		;;
+	*)
+		log_error "Unknown option: $1"
+		print_usage
+		exit 1
+		;;
+	esac
+done
 
-  # Validate required configuration_name
-  if [[ -z "${configuration_name:-}" ]]; then
-    errors+=("Configuration name is required (use -n or --name)")
-  fi
+# ==============================================================================
+# Validate
+if [[ -z "${flake_uri}" ]]; then
+	log_error "Flake URI is required (use -f or --flake)."
+	print_usage
+	exit 10
+fi
 
-  # Check configuration path exists if specified
-  if [[ -n "${configuration_path:-}" ]] && [[ ! -d "${configuration_path}" ]]; then
-    errors+=("Configuration path '${configuration_path}' does not exist")
-  fi
+config_root_path=$(cut -d# -f1 <<<"$flake_uri")
+host_name=$(cut -d# -f2 <<<"$flake_uri")
 
-  # Report errors if any
-  if [[ ${#errors[@]} -gt 0 ]]; then
-    log_error "Missing or invalid arguments:"
-    for error in "${errors[@]}"; do
-      log_error "  - $error"
-    done
-    return 1
-  fi
+if [[ -z "${host_name}" ]] || [[ "${flake_uri}" != *"#"* ]]; then
+	log_error "Invalid flake URI format. Expected 'path#name' (e.g., '.#myhost' or '/path/to/flakes#myhost')."
+	print_usage
+	exit 11
+fi
 
-  return 0
-}
+if [[ -z "${config_root_path}" ]] && [[ "${flake_uri}" == "#${host_name}" ]]; then
+	config_root_path="."
+fi
 
-# Main function
-main() {
-  log_info "Starting hardware configuration update"
-  
-  # Parse command line arguments
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      -p|--path)
-        if [[ $# -gt 1 ]]; then
-          configuration_path="$2"
-          log_debug "Set configuration path: $configuration_path"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      -n|--name)
-        if [[ $# -gt 1 ]]; then
-          configuration_name="$2"
-          log_debug "Set configuration name: $configuration_name"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        log_debug "Verbose mode enabled"
-        shift
-        ;;
-      -h|--help)
-        print_usage
-        exit 0
-        ;;
-      *)
-        log_error "Unknown option: $1"
-        print_usage
-        exit 1
-        ;;
-    esac
-  done
+if [[ ! -d "${config_root_path}" ]]; then
+	log_error "Configuration root path '${config_root_path}' (derived from flake URI) does not exist."
+	print_usage
+	exit 12
+fi
 
-  # Validate required arguments
-  validate_args || { print_usage; exit 1; }
+# ==============================================================================
+# Main
+log_info "Starting hardware configuration update for host: ${host_name} (from flake: ${flake_uri})"
 
-  # Build paths
-  local facter_path="${configuration_path}/hosts/${configuration_name}/facter.json"
-  
-  log_debug "Configuration path: ${configuration_path}"
-  log_debug "Configuration name: ${configuration_name}"
-  log_debug "Facter path: ${facter_path}"
+host_config_dir="${config_root_path}/system/hosts/${host_name}"
+target_facter_file="${host_config_dir}/facter.json"
 
-  # Create host directory if it doesn't exist
-  local host_dir="${configuration_path}/hosts/${configuration_name}"
-  if [[ ! -d "$host_dir" ]]; then
-    log_info "Creating host directory: ${host_dir}"
-    mkdir -p "$host_dir"
-  fi
+log_debug "Parsed Flake URI: ${flake_uri}"
+log_debug "  Config root path: ${config_root_path}"
+log_debug "  Host name: ${host_name}"
+log_debug "Target host configuration directory: ${host_config_dir}"
+log_debug "Target facter.json file: ${target_facter_file}"
 
-  # Backup existing facter.json if it exists
-  if [[ -f "$facter_path" ]]; then
-    local backup_path="${facter_path}.backup-$(date +%Y%m%d%H%M%S)"
-    log_info "Backing up existing facter.json to ${backup_path}"
-    cp "$facter_path" "$backup_path"
-  fi
+if [[ ! -d "$host_config_dir" ]]; then
+	log_error "Target host does not exist: ${host_name}"
+	exit 1
+fi
 
-  # Generate hardware configuration JSON
-  log_info "Generating hardware configuration with nixos-facter"
-  nix run \
-    --experimental-features "nix-command flakes" \
-    nixpkgs#nixos-facter -- -o "${facter_path}"
-    
-  log_success "Hardware configuration updated successfully at ${facter_path}"
-}
+if [[ -f "$target_facter_file" ]]; then
+	backup_file_name="facter.json.backup-$(date +%Y%m%d%H%M%S)"
+	backup_path="${host_config_dir}/${backup_file_name}"
+	log_info "Backing up existing '${target_facter_file}' to '${backup_path}'"
+	cp "$target_facter_file" "$backup_path" || {
+		log_error "Failed to backup facter.json"
+		exit 1
+	}
+fi
 
-# Run the main function
-main "$@"
+log_info "Generating hardware configuration into '${target_facter_file}'"
+facter "${host_config_dir}"
+
+log_success "Hardware configuration updated successfully at '${target_facter_file}'"

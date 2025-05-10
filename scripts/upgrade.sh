@@ -1,181 +1,154 @@
 #!/usr/bin/env bash
-# upgrade.sh: Upgrade NixOS configuration locally or remotely
 
 set -o errexit  # Exit on error
 set -o nounset  # Exit on unset variables
 set -o pipefail # Exit on pipe failures
 
-# Get script directory for loading dependencies
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
-# Load common functions
-# shellcheck source=./common-functions.sh
-source "${SCRIPT_DIR}/common-functions.sh"
+# shellcheck source=./lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=./lib/nix-utils.sh
+source "${SCRIPT_DIR}/lib/nix-utils.sh"
 
-# ---- Script configuration ----
-configuration_path="." # Default value
-configuration_name=""  # Required
-ssh_address=""         # Optional
-ssh_port="22"          # Default value
-is_remote=false        # Default to local
-VERBOSE=0              # Default to non-verbose mode
+setup_error_trap on_error
 
-# ---- Usage information ----
+# ==============================================================================
+
+flake_uri=""
+ssh_target="" # Stores user@address for remote deployment
+ssh_port="22" # Default SSH port
+VERBOSE=0     # Default to non-verbose mode
+
+# ==============================================================================
 print_usage() {
-  cat << EOF
+	cat <<EOF
 $(basename "${BASH_SOURCE[0]}") - Upgrade NixOS configuration locally or remotely
 
 USAGE:
-  $(basename "${BASH_SOURCE[0]}") [OPTIONS]
+  $(basename "${BASH_SOURCE[0]}") --flake <flake_uri> [OPTIONS]
 
 OPTIONS:
-  -p, --path PATH         Configuration path (default: ".")
-  -n, --name NAME         Configuration name (required)
-  -a, --address ADDRESS   SSH address for remote deployment (optional)
-  --port PORT             SSH port (default: "22", only used with --address)
-  -v, --verbose           Print verbose output
-  -h, --help              Print this help message
+  -f, --flake FLAKE_URI       Flake URI pointing to the configuration (e.g., '.#desktop' or '/path/to/config#laptop')
+  -t, --ssh-target TARGET     Remote target for deployment in 'user@address' format (e.g., root@192.168.1.100)
+  --ssh-port PORT             SSH port for remote deployment (default: "22")
+  -v, --verbose               Print verbose output
+  -h, --help                  Print this help message
 
 EXAMPLES:
   # Local upgrade
-  $(basename "${BASH_SOURCE[0]}") --name desktop
-  
+  $(basename "${BASH_SOURCE[0]}") --flake .#desktop
+
   # Remote upgrade
-  $(basename "${BASH_SOURCE[0]}") --name vm --address 192.168.1.100
+  $(basename "${BASH_SOURCE[0]}") --flake .#server --ssh-target root@192.168.1.100
+  $(basename "${BASH_SOURCE[0]}") --flake .#remotevm --ssh-target admin@my.server.com --ssh-port 2222
 EOF
 }
 
-# Function to validate arguments
-validate_args() {
-  local -a errors=()
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	-f | --flake)
+		if [[ $# -gt 1 ]]; then
+			flake_uri="$2"
+			shift 2
+		else
+			log_error "Missing value for --flake option."
+			print_usage
+			exit 1
+		fi
+		;;
+	-t | --ssh-target)
+		if [[ $# -gt 1 ]]; then
+			ssh_target="$2"
+			shift 2
+		else
+			log_error "Missing value for --ssh-target option."
+			print_usage
+			exit 1
+		fi
+		;;
+	--ssh-port)
+		if [[ $# -gt 1 ]]; then
+			ssh_port="$2"
+			shift 2
+		else
+			log_error "Missing value for --ssh-port option."
+			print_usage
+			exit 1
+		fi
+		;;
+	-v | --verbose)
+		VERBOSE=1
+		log_debug "Verbose mode enabled."
+		shift
+		;;
+	-h | --help)
+		print_usage
+		exit 0
+		;;
+	*)
+		log_error "Unknown option: $1"
+		print_usage
+		exit 1
+		;;
+	esac
+done
 
-  # Validate required configuration_name
-  if [[ -z "${configuration_name:-}" ]]; then
-    errors+=("Configuration name is required (use -n or --name)")
-  fi
+# ==============================================================================
 
-  # Check configuration path exists if specified
-  if [[ -n "${configuration_path:-}" ]] && [[ ! -d "${configuration_path}" ]]; then
-    errors+=("Configuration path '${configuration_path}' does not exist")
-  fi
+if [[ -z "${flake_uri}" ]]; then
+	log_error "Flake URI is required (use -f or --flake)."
+	print_usage
+	exit 10
+fi
 
-  # Report errors if any
-  if [[ ${#errors[@]} -gt 0 ]]; then
-    log_error "Missing or invalid arguments:"
-    for error in "${errors[@]}"; do
-      log_error "  - $error"
-    done
-    return 1
-  fi
+# Basic validation for flake URI format (must contain '#')
+if [[ "${flake_uri}" != *"#"* ]]; then
+	log_error "Invalid flake URI format. Expected 'path#name' (e.g., '.#myhost' or '/path/to/flakes#myhost')."
+	print_usage
+	exit 11
+fi
 
-  return 0
-}
+# If --ssh-port is specified (and not default), --ssh-target must also be provided.
+if [[ "${ssh_port}" != "22" && -z "${ssh_target}" ]]; then
+	log_error "Remote target (--ssh-target) is required when specifying a non-default --ssh-port."
+	print_usage
+	exit 12
+fi
 
-# Main function
-main() {
-  log_info "Starting NixOS upgrade"
-  
-  # Parse command line arguments
-  while [[ $# -gt 0 ]]; do
-    case "$1" in
-      -p|--path)
-        if [[ $# -gt 1 ]]; then
-          configuration_path="$2"
-          log_debug "Set configuration path: $configuration_path"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      -n|--name)
-        if [[ $# -gt 1 ]]; then
-          configuration_name="$2"
-          log_debug "Set configuration name: $configuration_name"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      -a|--address)
-        if [[ $# -gt 1 ]]; then
-          ssh_address="$2"
-          is_remote=true
-          log_debug "Set SSH address: $ssh_address"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      --port)
-        if [[ $# -gt 1 ]]; then
-          ssh_port="$2"
-          log_debug "Set SSH port: $ssh_port"
-          shift 2
-        else
-          log_error "Missing value for $1"
-          print_usage
-          exit 1
-        fi
-        ;;
-      -v|--verbose)
-        VERBOSE=1
-        log_debug "Verbose mode enabled"
-        shift
-        ;;
-      -h|--help)
-        print_usage
-        exit 0
-        ;;
-      *)
-        log_error "Unknown option: $1"
-        print_usage
-        exit 1
-        ;;
-    esac
-  done
+# ==============================================================================
 
-  # Validate required arguments
-  validate_args || { print_usage; exit 1; }
+log_info "Starting NixOS upgrade for flake: ${flake_uri}"
 
-  # Build flake URI
-  local flake_uri="${configuration_path}#${configuration_name}"
-  
-  log_debug "Configuration path: ${configuration_path}"
-  log_debug "Configuration name: ${configuration_name}"
-  log_debug "Flake URI: ${flake_uri}"
-  
-  if $is_remote; then
-    log_debug "Remote upgrade: ${ssh_address}:${ssh_port}"
-  else
-    log_debug "Local upgrade"
-    # Check for root only for local upgrades
-    check_root
-  fi
+nixos_rebuild_args=(
+	"switch"
+	"--no-write-lock-file"
+	"--flake"
+	"${flake_uri}"
+)
 
-  # Perform system upgrade
-  if $is_remote; then
-    log_info "Upgrading remote system at ${ssh_address}"
-    nixos-rebuild switch \
-      --no-write-lock-file \
-      --verbose \
-      --flake "${flake_uri}" \
-      --target-host "root@${ssh_address}:${ssh_port}"
-  else
-    log_info "Upgrading local system"
-    nixos-rebuild switch \
-      --no-write-lock-file \
-      --verbose \
-      --flake "${flake_uri}"
-  fi
+if [[ ${VERBOSE} -eq 1 ]]; then
+	nixos_rebuild_args+=("--verbose" "--show-trace")
+fi
 
-  log_success "System upgrade completed successfully"
-}
+if [[ -n "${ssh_target}" ]]; then
+	# ---- REMOTE UPGRADE ----
+	log_info "Performing remote upgrade on ${ssh_target} (Port: ${ssh_port})"
+	log_debug "Target host specification for nixos-rebuild: ${ssh_target}"
+	log_debug "Using SSH port: ${ssh_port}"
 
-# Run the main function
-main "$@"
+	nixos_rebuild_args+=("--target-host" "${ssh_target}")
+
+	if [[ "${ssh_port}" != "22" ]]; then
+		log_info "Attempting to use non-standard SSH port ${ssh_port}. Ensure SSH client is configured or NIX_SSHOPTS is effective."
+	fi
+
+	log_info "Executing: NIX_SSHOPTS=\"-p ${ssh_port}\" nixos-rebuild ${nixos_rebuild_args[*]}"
+	NIX_SSHOPTS="-p ${ssh_port}" nixos-rebuild "${nixos_rebuild_args[@]}"
+
+else
+	log_info "Executing: nixos-rebuild ${nixos_rebuild_args[*]}"
+	sudo nixos-rebuild "${nixos_rebuild_args[@]}"
+fi
+
+log_success "System upgrade completed successfully for ${flake_uri}."
