@@ -5,10 +5,29 @@
   pkgs,
   ...
 }: let
-  # Extract values from the hostSpec
+  hostDevice = config.modules.hostSpec.device or "/dev/sda";
   loaderType = config.modules.hostSpec.loader or "systemd";
-  device = config.modules.hostSpec.device or "/dev/sda";
-  safePath = config.modules.hostSpec.safePath or "/persist";
+  persistedDataPath = config.modules.hostSpec.safePath or "/persist";
+
+  zfsPoolName = "rpool";
+  zfsRootDataset = "local/root";
+  zfsRootFsPath = "${zfsPoolName}/${zfsRootDataset}";
+  blankSnapshotSuffix = "@blank";
+  fullBlankSnapshotName = "${zfsRootFsPath}${blankSnapshotSuffix}";
+  zfsRollbackCommand = "zfs rollback -r ${fullBlankSnapshotName}";
+
+  createBlankSnapshotScript = pkgs.writeShellScript "create-blank-snapshot.sh" ''
+    set -o errexit  # Exit on error
+    set -o nounset  # Exit on unset variables
+    set -o pipefail # Exit on pipe failures
+
+    if ! zfs list -t snapshot -H -o name | grep -q -E '^${lib.escapeShellArg fullBlankSnapshotName}$'; then
+      echo "Creating blank snapshot: ${fullBlankSnapshotName}"
+      zfs snapshot "${fullBlankSnapshotName}"
+    else
+      echo "Blank snapshot already exists: ${fullBlankSnapshotName}"
+    fi
+  '';
 in {
   imports = [
     inputs.disko.nixosModules.disko
@@ -21,63 +40,35 @@ in {
     # Boot configuration
     {
       boot = {
-        # Use the regular Linux kernel
         kernelPackages = lib.mkForce pkgs.linuxPackages;
 
-        # Boot loader configuration based on hostSpec
         loader = {
           grub = lib.mkIf (loaderType == "grub") {
             enable = true;
-            forceInstall = true;
             efiSupport = true;
             configurationLimit = 5;
             zfsSupport = true;
-            inherit device;
+            device = hostDevice;
           };
-
           systemd-boot = lib.mkIf (loaderType == "systemd") {
             enable = true;
             configurationLimit = 5;
           };
-
           efi.canTouchEfiVariables = loaderType == "systemd";
         };
 
-        # Support for various filesystems
-        supportedFilesystems = [
-          "btrfs"
-          "reiserfs"
-          "vfat"
-          "f2fs"
-          "xfs"
-          "ntfs"
-          "cifs"
-          "zfs"
-        ];
+        supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
+        binfmt.emulatedSystems = ["x86_64-windows" "aarch64-linux"];
 
-        # Support for binary formats
-        binfmt.emulatedSystems = [
-          "x86_64-windows"
-          "aarch64-linux"
-        ];
-
-        # ZFS rollback commands for resetting root
-        initrd.postDeviceCommands = lib.mkAfter (
-          builtins.concatStringsSep "; " (
-            lib.map (sn: "zfs rollback -r ${sn}") [
-              "rpool/local/root@blank"
-            ]
-          )
-        );
+        initrd.postDeviceCommands = lib.mkAfter zfsRollbackCommand;
       };
     }
 
     # ZFS configuration
     {
-      # ZFS service configuration
       services.zfs = {
         autoScrub.enable = true;
-        autoSnapshot.enable = true;
+        autoSnapshot.enable = false;
         trim.enable = true;
         trim.interval = "weekly";
       };
@@ -85,8 +76,7 @@ in {
 
     # Persistence configuration
     {
-      # Persistence configuration
-      environment.persistence.${safePath} = {
+      environment.persistence."${persistedDataPath}" = {
         enable = true;
         hideMounts = true;
         directories =
@@ -95,13 +85,9 @@ in {
             "/var/lib/nixos"
             "/etc/NetworkManager/system-connections"
           ]
-          ++ (
-            lib.optional config.modules.hardware.bluetooth.enable "/var/lib/bluetooth"
-          );
+          ++ (lib.optional config.modules.hardware.bluetooth.enable "/var/lib/bluetooth");
       };
-
-      # Ensure the persistence path is mounted
-      fileSystems.${safePath}.neededForBoot = true;
+      fileSystems."${persistedDataPath}".neededForBoot = true;
     }
 
     # Facter configuration
@@ -115,22 +101,22 @@ in {
       disko.devices = {
         disk = {
           main = {
-            inherit device;
+            device = hostDevice;
             imageName = "nixos-disko-root-zfs";
             imageSize = "32G";
             type = "disk";
             content = {
               type = "gpt";
               partitions = {
-                boot = {
+                boot = lib.mkIf (loaderType == "grub") {
                   label = "BOOT";
                   size = "1M";
-                  type = "EF02"; # for GRUB MBR
+                  type = "bios_boot"; # Symbolic type for EF02
                 };
                 esp = {
                   label = "EFI";
                   size = "2G";
-                  type = "EF00";
+                  type = "ESP"; # Symbolic type for EF00
                   content = {
                     type = "filesystem";
                     format = "vfat";
@@ -140,10 +126,10 @@ in {
                 };
                 encryptedSwap = {
                   size = "128M";
+                  priority = 100;
                   content = {
                     type = "swap";
                     randomEncryption = true;
-                    priority = 100;
                   };
                 };
                 swap = {
@@ -158,7 +144,7 @@ in {
                   size = "100%";
                   content = {
                     type = "zfs";
-                    pool = "rpool";
+                    pool = zfsPoolName;
                   };
                 };
               };
@@ -167,7 +153,7 @@ in {
         };
 
         zpool = {
-          rpool = {
+          "${zfsPoolName}" = {
             type = "zpool";
             mountpoint = "/";
             options = {
@@ -184,25 +170,22 @@ in {
               compression = "zstd";
             };
             datasets = {
-              local = {
+              "local" = {
                 type = "zfs_fs";
                 options.mountpoint = "none";
               };
-              "local/root" = {
+              "${zfsRootDataset}" = {
                 type = "zfs_fs";
                 options.mountpoint = "legacy";
                 mountpoint = "/";
-                postCreateHook = ''
-                  zfs list -t snapshot -H -o name | grep -E '^rpool/local/root@blank$' \
-                  || zfs snapshot rpool/local/root@blank
-                '';
+                postCreateHook = createBlankSnapshotScript;
               };
               "local/nix" = {
                 type = "zfs_fs";
                 options.mountpoint = "legacy";
                 mountpoint = "/nix";
               };
-              safe = {
+              "safe" = {
                 type = "zfs_fs";
                 options.mountpoint = "none";
               };
@@ -214,7 +197,7 @@ in {
               "safe/persist" = {
                 type = "zfs_fs";
                 options.mountpoint = "legacy";
-                mountpoint = safePath;
+                mountpoint = persistedDataPath;
               };
             };
           };
