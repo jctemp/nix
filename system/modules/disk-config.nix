@@ -14,9 +14,9 @@
   zfsRootFsPath = "${zfsPoolName}/${zfsRootDataset}";
   blankSnapshotSuffix = "@blank";
   fullBlankSnapshotName = "${zfsRootFsPath}${blankSnapshotSuffix}";
-  zfsRollbackCommand = "zfs rollback -r ${fullBlankSnapshotName}";
 
-  createBlankSnapshotScript = pkgs.writeShellScript "create-blank-snapshot.sh" ''
+  zfsRollbackCommand = "zfs rollback -r ${fullBlankSnapshotName}";
+  createBlankSnapshotScript = ''
     set -o errexit  # Exit on error
     set -o nounset  # Exit on unset variables
     set -o pipefail # Exit on pipe failures
@@ -45,6 +45,7 @@ in {
         loader = {
           grub = lib.mkIf (loaderType == "grub") {
             enable = true;
+            forceInstall = true; # Required for remote VM
             efiSupport = true;
             configurationLimit = 5;
             zfsSupport = true;
@@ -108,15 +109,15 @@ in {
             content = {
               type = "gpt";
               partitions = {
-                boot = lib.mkIf (loaderType == "grub") {
+                boot = {
                   label = "BOOT";
                   size = "1M";
-                  type = "bios_boot"; # Symbolic type for EF02
+                  type = "EF02"; # Symbolic type for bios_boot
                 };
                 esp = {
                   label = "EFI";
                   size = "2G";
-                  type = "ESP"; # Symbolic type for EF00
+                  type = "EF00"; # Symbolic type for ESP
                   content = {
                     type = "filesystem";
                     format = "vfat";
@@ -126,10 +127,10 @@ in {
                 };
                 encryptedSwap = {
                   size = "128M";
-                  priority = 100;
                   content = {
                     type = "swap";
                     randomEncryption = true;
+                    priority = 100;
                   };
                 };
                 swap = {
