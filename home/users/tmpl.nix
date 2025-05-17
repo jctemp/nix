@@ -384,6 +384,7 @@ in {
     zotero
     blender_4_3
     freecad
+    gitkraken
 
     # LSPs
     lsp.python.pylsp
