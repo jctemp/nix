@@ -6,8 +6,9 @@
   # Define language server packages
   lsp = {
     python = {
+      ruff = pkgs.ruff;
+      jedi = pkgs.python3Packages.jedi-language-server;
       pylsp = pkgs.python3Packages.python-lsp-server;
-      ruff = pkgs.python3Packages.python-lsp-ruff;
     };
     rust = pkgs.rust-analyzer;
     zig = pkgs.zls;
@@ -111,7 +112,7 @@ in {
     enable = true;
     defaultEditor = true;
     settings = {
-      theme = "catppuccin_macchiato";
+      theme = "ayu_dark";
       editor = {
         line-number = "absolute";
         true-color = true;
@@ -135,16 +136,12 @@ in {
     };
     languages = {
       language-server = {
-        pylsp = {
-          command = "${lsp.python.pylsp}/bin/pylsp";
-          config = {
-            pylsp = {
-              plugins = {
-                ruff = {enabled = true;};
-              };
-            };
-          };
+        ruff = {
+          command = "${lsp.python.ruff}/bin/ruff";
+          args = ["server"];
         };
+        jedi = {command = "${lsp.python.jedi}/bin/jedi";};
+        pylsp = {command = "${lsp.python.pylsp}/bin/pylsp";};
         rust-analyzer = {command = "${lsp.rust}/bin/rust-analyzer";};
         zls = {command = "${lsp.zig}/bin/zls";};
         clangd = {command = "${lsp.c-cpp}/bin/clangd";};
@@ -172,12 +169,17 @@ in {
       in [
         {
           name = "python";
-          language-servers = ["pylsp"];
+          language-servers = ["ruff" "jedi" "pylsp"];
           formatter = {
-            command = "${fmt.python}/bin/ruff"; # fmt.python points to pkgs.ruff
+            command = "${fmt.python}/bin/ruff";
             args = ["format" "--silent" "-"];
           };
           auto-format = true;
+          comment-token = "#";
+          roots = ["pyproject.toml" "setup.py" "poetry.lock" "pyrightconfig.json"];
+          shebangs = ["python" "uv"];
+          scope = "source.python";
+          file-types = ["py" "pyi" "py3" "pyw" "ptl" "rpy" "cpy" "ipy" "pyt" {glob = ".python_history";} {glob = ".pythonstartup";} {glob = ".pythonrc";} {glob = "*SConstruct";} {glob = "*SConscript";} {glob = "*sconstruct";}];
         }
         {
           name = "rust";
@@ -185,9 +187,10 @@ in {
           formatter = {
             command = "${fmt.rust}/bin/rustfmt";
           };
-          # Add settings from your reference
-          # persistent-diagnostic-sources = [ ... ]; # Requires careful path handling if needed
           auto-format = true;
+          roots = ["Cargo.toml" "Cargo.lock"];
+          shebangs = ["rust-script" "cargo"];
+          # persistent-diagnostic-sources = ["rustc" "clippy"];
         }
         {
           name = "zig";
@@ -252,7 +255,7 @@ in {
     settings = {
       simplified_ui = true;
       copy_command = "${pkgs.xclip}/bin/xclip -sel clipboard";
-      theme = "catppuccin-macchiato";
+      theme = "ayu_dark";
       show_startup_tips = false;
     };
   };
@@ -260,8 +263,9 @@ in {
     enable = true;
     enableBashIntegration = true;
     settings = {
-      theme = "catppuccin-macchiato";
+      theme = "ayu";
       font-size = 12;
+      maximize = true;
     };
   };
   programs.chromium = {
@@ -387,8 +391,9 @@ in {
     gitkraken
 
     # LSPs
-    lsp.python.pylsp
     lsp.python.ruff
+    lsp.python.pylsp
+    lsp.python.jedi
     lsp.rust
     lsp.zig
     lsp.c-cpp # Provides clangd
