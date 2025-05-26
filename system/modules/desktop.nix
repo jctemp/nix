@@ -68,15 +68,5 @@
         ]
         ++ config.modules.desktop.extraPackages;
     }
-
-    # Font configuration
-    {
-      fonts.packages = with pkgs; [
-        dejavu_fonts
-        noto-fonts
-        noto-fonts-emoji
-        (nerdfonts.override {fonts = ["FiraCode" "DroidSansMono"];})
-      ];
-    }
   ]);
 }

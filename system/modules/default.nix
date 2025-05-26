@@ -66,6 +66,7 @@
     boot.tmp.cleanOnBoot = true;
     boot.kernelModules = ["tcp_bbr"];
     system.stateVersion = "24.11";
+    system.rebuild.enableNg = true;
 
     # Essential system packages
     environment.systemPackages = with pkgs; [
@@ -90,9 +91,10 @@
 
     # Basic font selection
     fonts.packages = with pkgs; [
-      dejavu_fonts
-      noto-fonts
-      noto-fonts-emoji
+      nerd-fonts.symbols-only
+      nerd-fonts.ubuntu
+      nerd-fonts.ubuntu-mono
+      nerd-fonts.roboto-mono
     ];
 
     # Enable zsh

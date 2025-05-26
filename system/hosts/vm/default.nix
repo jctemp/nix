@@ -16,13 +16,13 @@
 
     # Minimal hardware support
     hardware = {
-      audio.enable = false;
       bluetooth.enable = false;
       nvidia.enable = false;
     };
 
     # Server services
     services = {
+      audio.enable = false;
       printing.enable = false;
       sshd.enable = true;
       fail2ban.enable = true;
@@ -91,9 +91,4 @@
     enable = lib.mkDefault false;
     man.enable = true;
   };
-
-  # Disable unnecessary services for VM
-  services.xserver.enable = false;
-  services.printing.enable = false;
-  hardware.pulseaudio.enable = false;
 }

@@ -6,12 +6,6 @@
 }: {
   # Define hardware module options
   options.modules.hardware = {
-    audio.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Enable audio support with PipeWire";
-    };
-
     bluetooth.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -36,21 +30,6 @@
         enable32Bit = true;
       };
     }
-
-    # Audio configuration
-    (lib.mkIf config.modules.hardware.audio.enable {
-      hardware.pulseaudio.enable = false;
-      security.rtkit.enable = true;
-      services.pipewire = {
-        enable = true;
-        alsa = {
-          enable = true;
-          support32Bit = true;
-        };
-        pulse.enable = true;
-        jack.enable = true;
-      };
-    })
 
     # Bluetooth configuration
     (lib.mkIf config.modules.hardware.bluetooth.enable {

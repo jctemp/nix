@@ -24,6 +24,15 @@
       };
     };
 
+    # Audio services
+    audio = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable audio support";
+      };
+    };
+
     # fail2ban
     fail2ban = {
       enable = lib.mkOption {
@@ -88,6 +97,20 @@
         };
       };
     }
+    # Audio configuration
+    (lib.mkIf config.modules.services.audio.enable {
+      services.pulseaudio.enable = false;
+      security.rtkit.enable = true;
+      services.pipewire = {
+        enable = true;
+        alsa = {
+          enable = true;
+          support32Bit = true;
+        };
+        pulse.enable = true;
+        jack.enable = true;
+      };
+    })
     {
       # fail2ban configuration
       services.fail2ban = lib.mkIf config.modules.services.fail2ban.enable {

@@ -16,13 +16,13 @@
 
     # Hardware support
     hardware = {
-      audio.enable = true;
       bluetooth.enable = true;
       nvidia.enable = true;
     };
 
     # Core services
     services = {
+      audio.enable = true;
       printing.enable = true;
       sshd.enable = true;
       fail2ban.enable = false;
