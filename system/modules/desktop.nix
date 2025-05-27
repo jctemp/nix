@@ -48,8 +48,20 @@
         desktopManager.gnome.enable = true;
       };
 
+      services.gnome.sushi.enable = true;
+      services.gvfs.enable = true;
+      xdg.portal = {
+        enable = true;
+        extraPortals = [pkgs.xdg-desktop-portal-gnome];
+      };
+
       environment.systemPackages = with pkgs; [
+        glib-networking
+        trashy
+        whitesur-gtk-theme
+        whitesur-icon-theme
         gnome-tweaks
+        gnomeExtensions.user-themes
         gnomeExtensions.forge
         gnomeExtensions.appindicator
         gnomeExtensions.dash-to-dock
