@@ -5,7 +5,7 @@
 }: {
   # Host specification for disk setup
   modules.hostSpec = {
-    device = "/dev/sda";
+    disk = "/dev/sda";
     loader = "grub";
   };
 

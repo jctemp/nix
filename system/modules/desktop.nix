@@ -36,6 +36,7 @@
       services.udisks2.enable = true;
       networking.networkmanager.enable = true;
       services.power-profiles-daemon.enable = true;
+      xdg.portal.enable = true;
     }
 
     # Environment-specific configurations
@@ -46,13 +47,6 @@
           wayland = true;
         };
         desktopManager.gnome.enable = true;
-      };
-
-      services.gnome.sushi.enable = true;
-      services.gvfs.enable = true;
-      xdg.portal = {
-        enable = true;
-        extraPortals = [pkgs.xdg-desktop-portal-gnome];
       };
 
       environment.systemPackages = with pkgs; [
@@ -67,18 +61,5 @@
         gnomeExtensions.dash-to-dock
       ];
     })
-
-    # Common desktop applications
-    {
-      environment.systemPackages = with pkgs;
-        [
-          libreoffice
-          nautilus
-          vlc
-          gimp
-          pavucontrol
-        ]
-        ++ config.modules.desktop.extraPackages;
-    }
   ]);
 }

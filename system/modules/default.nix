@@ -4,6 +4,7 @@
   ...
 }: {
   imports = [
+    ./options.nix
     ./hardware.nix
     ./services.nix
     ./security.nix
@@ -12,37 +13,6 @@
     ./networking.nix
     ./locale.nix
   ];
-
-  # Define common options for all modules
-  options.modules.hostSpec = {
-    hostName = lib.mkOption {
-      type = lib.types.str;
-      description = "Name of the host";
-    };
-
-    device = lib.mkOption {
-      type = lib.types.str;
-      description = "Device path for disko";
-    };
-
-    loader = lib.mkOption {
-      type = lib.types.enum ["systemd" "grub"];
-      description = "Type of loader for system boot";
-      default = "systemd";
-    };
-
-    safePath = lib.mkOption {
-      type = lib.types.str;
-      description = "The base directory for persistence";
-      default = "/persist";
-    };
-
-    kernelPackage = lib.mkOption {
-      type = lib.types.enum ["default" "zen" "hardened"];
-      description = "Which kernel package to use";
-      default = "default";
-    };
-  };
 
   config = {
     # Nix configuration
@@ -69,24 +39,31 @@
     system.rebuild.enableNg = true;
 
     # Essential system packages
-    environment.systemPackages = with pkgs; [
-      # Basic utilities
-      curl
-      git
-      tree
-      vim
-      htop
-
-      # System tools
-      file
-      pciutils
-      usbutils
-
-      # Archives & text processing
-      unzip
-      zip
-      jq
-      ripgrep
+    environment.systemPackages = lib.flatten [
+      [
+        pkgs.bat
+        pkgs.bottom
+        pkgs.uutils-coreutils-noprefix
+        pkgs.dust
+        pkgs.dysk
+        pkgs.fselect
+        pkgs.hyperfine
+        pkgs.just
+        pkgs.mprocs
+        pkgs.ripgrep
+        pkgs.xh
+      ]
+      [
+        pkgs.curl
+        pkgs.git
+        pkgs.jq
+        pkgs.pciutils
+        pkgs.tree
+        pkgs.unzip
+        pkgs.usbutils
+        pkgs.vim
+        pkgs.zip
+      ]
     ];
 
     # Basic font selection
@@ -97,19 +74,14 @@
       nerd-fonts.roboto-mono
     ];
 
-    # Enable zsh
-    programs.zsh = {
-      enable = true;
-      autosuggestions.enable = true;
-      syntaxHighlighting.enable = true;
-    };
-
     # Documentation settings
     documentation = {
       enable = true;
+      dev.enable = true;
       doc.enable = false;
       info.enable = false;
       man.enable = true;
+      nixos.enable = true;
     };
   };
 }

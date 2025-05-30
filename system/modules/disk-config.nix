@@ -5,27 +5,59 @@
   pkgs,
   ...
 }: let
-  hostDevice = config.modules.hostSpec.device or "/dev/sda";
+  hostDevice = config.modules.hostSpec.disk or "/dev/sda";
   loaderType = config.modules.hostSpec.loader or "systemd";
   persistedDataPath = config.modules.hostSpec.safePath or "/persist";
+
+  kernelPackages =
+    if config.modules.hostSpec.kernelPackage == "default"
+    then pkgs.linuxPackages
+    else if config.modules.hostSpec.kernelPackage == "zen"
+    then pkgs.linuxPackages_zen
+    else if config.modules.hostSpec.kernelPackage == "hardened"
+    then pkgs.linuxPackages_hardened
+    else if config.modules.hostSpec.kernelPackage == "custom"
+    then config.modules.hostSpec.kernelPackages
+    else builtins.throw "kernelPackage ${config.modules.hostSpec.kernelPackage} is unknown. check hostSpec configuration";
+
+  loader =
+    if config.modules.hostSpec.loader == "systemd"
+    then {
+      systemd-boot = lib.mkIf (loaderType == "systemd") {
+        enable = true;
+        configurationLimit = 5;
+      };
+      efi.canTouchEfiVariables = loaderType == "systemd";
+    }
+    else if config.modules.hostSpec.loader == "grub"
+    then {
+      grub = lib.mkIf (loaderType == "grub") {
+        enable = true;
+        forceInstall = true; # Required for remote VM
+        efiSupport = true;
+        configurationLimit = 5;
+        zfsSupport = true;
+        device = hostDevice;
+      };
+    }
+    else builtins.throw "loader type ${config.modules.hostSpec.loader} is unknown. check hostSpec configuration";
 
   zfsPoolName = "rpool";
   zfsRootDataset = "local/root";
   zfsRootFsPath = "${zfsPoolName}/${zfsRootDataset}";
-  blankSnapshotSuffix = "@blank";
-  fullBlankSnapshotName = "${zfsRootFsPath}${blankSnapshotSuffix}";
+  zfsSnapshotBlank = "${zfsRootFsPath}@blank";
 
-  zfsRollbackCommand = "zfs rollback -r ${fullBlankSnapshotName}";
+  zfsRollbackCommand = "zfs rollback -r ${zfsSnapshotBlank}";
   createBlankSnapshotScript = ''
     set -o errexit  # Exit on error
     set -o nounset  # Exit on unset variables
     set -o pipefail # Exit on pipe failures
 
-    if ! zfs list -t snapshot -H -o name | grep -q -E '^${lib.escapeShellArg fullBlankSnapshotName}$'; then
-      echo "Creating blank snapshot: ${fullBlankSnapshotName}"
-      zfs snapshot "${fullBlankSnapshotName}"
+    if ! zfs list -t snapshot -H -o name | grep -q -E '^${lib.escapeShellArg zfsSnapshotBlank}$'; then
+      echo "Creating blank snapshot: ${zfsSnapshotBlank}"
+      zfs snapshot "${zfsSnapshotBlank}"
     else
-      echo "Blank snapshot already exists: ${fullBlankSnapshotName}"
+      echo "Blank snapshot already exists: ${zfsSnapshotBlank}"
     fi
   '';
 in {
@@ -40,28 +72,12 @@ in {
     # Boot configuration
     {
       boot = {
-        kernelPackages = lib.mkForce pkgs.linuxPackages;
-
-        loader = {
-          grub = lib.mkIf (loaderType == "grub") {
-            enable = true;
-            forceInstall = true; # Required for remote VM
-            efiSupport = true;
-            configurationLimit = 5;
-            zfsSupport = true;
-            device = hostDevice;
-          };
-          systemd-boot = lib.mkIf (loaderType == "systemd") {
-            enable = true;
-            configurationLimit = 5;
-          };
-          efi.canTouchEfiVariables = loaderType == "systemd";
-        };
-
-        supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
-        binfmt.emulatedSystems = ["x86_64-windows" "aarch64-linux"];
+        kernelPackages = lib.mkDefault kernelPackages;
+        inherit loader;
 
         initrd.postDeviceCommands = lib.mkAfter zfsRollbackCommand;
+        supportedFilesystems = ["btrfs" "reiserfs" "vfat" "f2fs" "xfs" "ntfs" "cifs" "zfs"];
+        binfmt.emulatedSystems = ["x86_64-windows" "aarch64-linux"];
       };
     }
 

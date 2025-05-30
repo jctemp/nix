@@ -1,9 +1,9 @@
 {pkgs, ...}: {
   # Host specification for disk setup
   modules.hostSpec = {
-    device = "/dev/nvme0n1";
+    disk = "/dev/nvme0n1";
     loader = "systemd";
-    kernelPackage = "zen"; # Use zen kernel for better laptop performance
+    kernelPackage = "custom";
   };
 
   # Enable key modules
