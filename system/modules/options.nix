@@ -27,14 +27,9 @@
     };
 
     kernelPackage = lib.mkOption {
-      type = lib.types.enum ["default" "zen" "hardened" "custom"];
+      type = lib.types.enum ["default" "zen" "hardened" "external"];
       description = "Which kernel package to use";
       default = "default";
-    };
-    kernelPackages = lib.mkOption {
-      type = lib.types.setType;
-      description = "Which kernel package to use";
-      default = config.boot.kernelPackages;
     };
   };
 }

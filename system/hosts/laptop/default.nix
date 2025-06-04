@@ -11,7 +11,7 @@
     # Enable full desktop environment
     desktop = {
       enable = true;
-      environment = "gnome";
+      gnome.enable = true;
     };
 
     # Hardware support

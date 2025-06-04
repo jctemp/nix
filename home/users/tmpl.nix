@@ -31,6 +31,10 @@
     nix = pkgs.alejandra;
   };
 in {
+  imports = [
+    ./gui.nix # Import GUI module
+  ];
+
   home = {
     username = "tmpl";
     homeDirectory = "/home/tmpl";

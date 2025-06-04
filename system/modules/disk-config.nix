@@ -16,8 +16,8 @@
     then pkgs.linuxPackages_zen
     else if config.modules.hostSpec.kernelPackage == "hardened"
     then pkgs.linuxPackages_hardened
-    else if config.modules.hostSpec.kernelPackage == "custom"
-    then config.modules.hostSpec.kernelPackages
+    else if config.modules.hostSpec.kernelPackage == "external"
+    then config.boot.kernelPackages
     else builtins.throw "kernelPackage ${config.modules.hostSpec.kernelPackage} is unknown. check hostSpec configuration";
 
   loader =
