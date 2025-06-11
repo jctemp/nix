@@ -32,6 +32,7 @@ in {
             {
               system.stateVersion = stateVersion;
               networking.hostName = name;
+              hostId = builtins.substring 0 8 (builtins.hashString "md5" name);
             }
           ]
           ++ modules;
@@ -55,7 +56,7 @@ in {
         extraSpecialArgs = let
           ctx = {
             inherit gui;
-            current = "user";
+            current = "home";
           };
           utils = import ./conditionals.nix {inherit lib ctx;};
         in {
@@ -72,38 +73,4 @@ in {
           ++ modules;
       };
     };
-
-  mkModule = {
-    name,
-    description ? "Enable ${name} module",
-    options ? {},
-    imports ? [],
-    system ? {},
-    user ? {},
-  }:
-    assert lib.isString name;
-    assert lib.isAttrs options;
-    assert lib.isList imports;
-    assert lib.isAttrs system;
-    assert lib.isAttrs user; ({
-      config,
-      lib,
-      ctx,
-      ...
-    }: {
-      inherit imports;
-      options.module."${name}" =
-        {
-          enable = lib.mkOption {
-            inherit description;
-            type = lib.types.bool;
-            default = false;
-          };
-        }
-        // options;
-      config = lib.mkMerge [
-        (lib.mkIf (config.module."${name}".enable && ctx.current == "system") system)
-        (lib.mkIf (config.module."${name}".enable && ctx.current == "user") user)
-      ];
-    });
 }

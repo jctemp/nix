@@ -27,36 +27,6 @@
 
   # Implement desktop configurations
   config = lib.mkIf config.modules.desktop.enable (lib.mkMerge [
-    # Common desktop settings
-    {
-      services.xserver.enable = true;
-      programs.dconf.enable = true;
-      services.accounts-daemon.enable = true;
-      services.gvfs.enable = true;
-      services.udisks2.enable = true;
-      networking.networkmanager.enable = true;
-      services.power-profiles-daemon.enable = true;
-    }
-
-    # Environment-specific configurations
-    (lib.mkIf (config.modules.desktop.environment == "gnome") {
-      services.xserver = {
-        displayManager.gdm = {
-          enable = true;
-          wayland = true;
-        };
-        desktopManager.gnome.enable = true;
-      };
-
-      environment.systemPackages = with pkgs; [
-        gnome-tweaks
-        gnomeExtensions.forge
-        gnomeExtensions.appindicator
-        gnomeExtensions.dash-to-dock
-      ];
-    })
-
-    # Common desktop applications
     {
       environment.systemPackages = with pkgs;
         [
