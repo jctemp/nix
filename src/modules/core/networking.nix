@@ -3,17 +3,21 @@
   config,
   lib,
   utils,
+  ctx,
   ...
 }: let
   cfg = config.modules.system.networking;
-in {
-  options.modules.system.networking = {
+
+  sharedOptions = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable networking module";
     };
+  };
 
+  # System-specific options (only used in system context)
+  systemOptions = {
     tcp.optimize = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -22,7 +26,7 @@ in {
 
     networkManager.enable = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      default = ctx.gui; # Default to GUI context preference
       description = "Use NetworkManager instead of systemd-networkd";
     };
 
@@ -35,7 +39,7 @@ in {
     ssh = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = false;
+        default = !ctx.gui; # Default enabled for headless
         description = "Enable SSH daemon";
       };
 
@@ -63,6 +67,20 @@ in {
       };
     };
   };
+
+  # User-specific options (only used in user context)
+  userOptions = {
+    applications = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [];
+      description = "Network applications to install for user";
+    };
+  };
+in {
+  options.modules.system.networking =
+    sharedOptions
+    // (utils.mkIfSystem systemOptions)
+    // (utils.mkIfUser userOptions);
 
   config = lib.mkMerge [
     (utils.mkIfSystemAnd (cfg.enable) {
@@ -96,7 +114,6 @@ in {
           dnsutils
           inetutils
           mtr
-          nmap
           tcpdump
         ]
         ++ lib.optionals
@@ -153,6 +170,17 @@ in {
       };
     })
     (utils.mkIfHomeAnd (cfg.enable) {
-      })
+      home.packages = with pkgs;
+        [
+          nmap # Network scanner
+          netcat # Network Swiss Army knife
+          iperf3 # Network performance testing
+          dig # DNS lookup
+        ]
+        ++ lib.optionals ctx.gui cfg.applications
+        ++ lib.optionals ctx.gui [
+          wireshark
+        ];
+    })
   ];
 }

@@ -3,17 +3,21 @@
   lib,
   pkgs,
   utils,
+  ctx,
   ...
 }: let
   cfg = config.modules.system.virtualisation;
-in {
-  options.modules.system.virtualisation = {
+
+  sharedOptions = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable virtualisation module";
     };
+  };
 
+  # System-specific options (only used in system context)
+  systemOptions = {
     containers = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -34,6 +38,20 @@ in {
       description = "Enable libvirt for VM management";
     };
   };
+
+  # User-specific options (only used in user context)
+  userOptions = {
+    applications = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [];
+      description = "Virtualisation applications to install for user";
+    };
+  };
+in {
+  options.modules.system.virtualisation =
+    sharedOptions
+    // (utils.mkIfSystem systemOptions)
+    // (utils.mkIfUser userOptions);
 
   config = lib.mkMerge [
     (utils.mkIfSystemAnd (cfg.enable) lib.mkMerge [
@@ -58,7 +76,6 @@ in {
             dive
           ]
           ++ lib.optionals (cfg.containers.backend == "podman") [
-            podman-tui
             podman-compose
           ]
           ++ lib.optionals (cfg.containers.backend == "docker") [
@@ -80,6 +97,12 @@ in {
       })
     ])
     (utils.mkIfHomeAnd (cfg.enable) {
-      })
+      home.packages =
+        (with pkgs;
+          lib.optionals cfg.containers.enable [
+            podman-tui
+          ])
+        ++ lib.optionals ctx.gui cfg.applications;
+    })
   ];
 }
