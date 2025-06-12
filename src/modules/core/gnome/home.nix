@@ -40,8 +40,8 @@ in {
     gtk = {
       enable = true;
       theme = {
-        name = cfg.theme.name;
-        package = cfg.theme.package;
+        inherit (cfg.theme) name;
+        inherit (cfg.theme) package;
       };
       gtk3.extraConfig = {
         gtk-application-prefer-dark-theme = 1;

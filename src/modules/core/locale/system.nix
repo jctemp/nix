@@ -1,8 +1,6 @@
 {
   config,
-  pkgs,
   lib,
-  ctx,
   ...
 }: let
   cfg = config.module.core.locale;
@@ -43,14 +41,14 @@ in {
     environment.systemPackages = cfg.extraPackages;
 
     time = {
-      timeZone = cfg.timeZone;
+      inherit (cfg) timeZone;
       hardwareClockInLocalTime = cfg.useHardwareClockInLocalTime;
     };
 
     services.timesyncd.enable = true;
 
     i18n = {
-      defaultLocale = cfg.defaultLocale;
+      inherit (cfg) defaultLocale;
       supportedLocales = [
         "${cfg.defaultLocale}/UTF-8"
         "${cfg.extraLocale}/UTF-8"
@@ -58,7 +56,7 @@ in {
       ];
 
       extraLocaleSettings = let
-        extraLocale = cfg.extraLocale;
+        inherit (cfg) extraLocale;
       in {
         LC_ADDRESS = extraLocale;
         LC_IDENTIFICATION = extraLocale;

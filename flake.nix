@@ -21,7 +21,7 @@
 
   outputs = inputs: let
     systems = ["x86_64-linux"];
-    eachSystem = systems: func: inputs.nixpkgs.lib.genAttrs systems (system: func system);
+    eachSystem = systems: func: inputs.nixpkgs.lib.genAttrs systems func;
     eachDefaultSystem = eachSystem systems;
   in {
     nixosConfigurations = let
@@ -51,7 +51,7 @@
               users.users =
                 lib.genAttrs
                 (lib.attrNames config.users.users)
-                (name: {extraGroups = ["surface-control"];});
+                (_name: {extraGroups = ["surface-control"];});
             })
           ];
           gui = true;
@@ -97,6 +97,11 @@
           packages = [
             pkgs.alejandra
             pkgs.deadnix
+            pkgs.statix
+            pkgs.nix-melt
+            pkgs.nix-diff
+            pkgs.nix-tree
+            pkgs.manix
           ];
           shellHook = ''
           '';

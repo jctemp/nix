@@ -29,7 +29,7 @@ in {
         alsa-utils
         pulsemixer
       ]
-      ++ lib.optionals (ctx.gui) [
+      ++ lib.optionals ctx.gui [
         pavucontrol
         easyeffects
         helvum

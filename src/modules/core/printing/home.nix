@@ -17,7 +17,7 @@ in {
 
   config = lib.mkIf cfg.enable {
     home.packages =
-      lib.mkIf (ctx.gui) (with pkgs; [
+      lib.mkIf ctx.gui (with pkgs; [
         system-config-printer
         evince
       ])

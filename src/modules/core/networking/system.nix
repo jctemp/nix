@@ -128,7 +128,7 @@ in {
     services.openssh = {
       enable = true;
       openFirewall = true;
-      banner = cfg.ssh.banner;
+      inherit (cfg.ssh) banner;
       settings = {
         KbdInteractiveAuthentication = false;
         PasswordAuthentication = false;

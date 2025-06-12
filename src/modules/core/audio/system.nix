@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  ctx,
   ...
 }: let
   cfg = config.module.core.audio;

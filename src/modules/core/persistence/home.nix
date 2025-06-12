@@ -1,8 +1,6 @@
 {
   config,
-  pkgs,
   lib,
-  ctx,
   ...
 }: let
   cfg = config.module.core.persistence;
