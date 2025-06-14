@@ -45,7 +45,7 @@ in {
 
       displayManager.gdm = {
         enable = true;
-        wayland = cfg.enableWayland;
+        wayland = cfg.wayland.enable;
       };
       desktopManager.gnome.enable = true;
     };

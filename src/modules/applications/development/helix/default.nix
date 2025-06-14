@@ -11,8 +11,8 @@
       ./home.nix
     ];
 
-  options.module.applications.helix = {
-    enable = {
+  options.module.applications.development.helix = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable helix text editor";

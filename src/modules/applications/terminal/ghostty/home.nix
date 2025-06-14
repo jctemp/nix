@@ -3,9 +3,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.ghostty;
+  cfg = config.module.applications.terminal.ghostty;
 in {
-  options.module.core.ghostty = {
+  options.module.applications.terminal.ghostty = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

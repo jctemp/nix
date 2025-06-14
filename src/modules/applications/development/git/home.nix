@@ -3,9 +3,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.git;
+  cfg = config.module.applications.development.git;
 in {
-  options.module.core.git = {
+  options.module.applications.development.git = {
     userName = lib.mkOption {
       type = lib.types.str;
       default = "";

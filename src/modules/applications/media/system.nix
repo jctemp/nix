@@ -6,7 +6,7 @@
 }: let
   cfg = config.module.applications.media;
 in {
-  options.module.core.media = {
+  options.module.applications.media = {
     extraPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];
@@ -26,15 +26,6 @@ in {
 
     environment.systemPackages = with pkgs;
       lib.optionals cfg.enableCodecs [
-        # Audio/Video codecs
-        gstreamer
-        gst_all_1.gstreamer
-        gst_all_1.gst-plugins-base
-        gst_all_1.gst-plugins-good
-        gst_all_1.gst-plugins-bad
-        gst_all_1.gst-plugins-ugly
-        gst_all_1.gst-libav
-
         # Hardware acceleration
         intel-media-driver
         vaapiIntel

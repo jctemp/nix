@@ -11,8 +11,8 @@
       ./home.nix
     ];
 
-  options.module.applications.zellij = {
-    enable = {
+  options.module.applications.terminal.zellij = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable zellij services and applications";

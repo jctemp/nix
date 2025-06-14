@@ -1,0 +1,7 @@
+{...}: {
+  imports = [
+    ./applications
+    ./core
+    ./hardware
+  ];
+}

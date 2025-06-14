@@ -12,7 +12,7 @@
     ];
 
   options.module.applications.web = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable web services and applications";

@@ -3,9 +3,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.helix;
+  cfg = config.module.applications.development.helix;
 in {
-  options.module.core.helix = {
+  options.module.applications.development.helix = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

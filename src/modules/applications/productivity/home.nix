@@ -7,7 +7,7 @@
 }: let
   cfg = config.module.applications.productivity;
 in {
-  options.module.core.productivity = {
+  options.module.applications.productivity = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

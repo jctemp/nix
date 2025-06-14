@@ -12,7 +12,7 @@
     ];
 
   options.module.core.boot = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable boot services and applications";

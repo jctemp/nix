@@ -7,7 +7,7 @@
 }: let
   cfg = config.module.applications.media;
 in {
-  options.module.core.media = {
+  options.module.applications.media = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

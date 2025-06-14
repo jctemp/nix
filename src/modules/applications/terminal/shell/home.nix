@@ -4,9 +4,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.shell;
+  cfg = config.module.applications.terminal.shell;
 in {
-  options.module.core.shell = {
+  options.module.applications.terminal.shell = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];
@@ -71,7 +71,7 @@ in {
 
     programs.bash = {
       enable = true;
-      inherit (cfg) enableCompletion;
+      completion.enable = cfg.enableCompletion;
       shellAliases = cfg.aliases;
       bashrcExtra = cfg.extraConfig;
     };

@@ -12,7 +12,7 @@
     ];
 
   options.module.core.audio = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable audio services and applications";

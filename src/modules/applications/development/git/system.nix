@@ -4,9 +4,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.git;
+  cfg = config.module.applications.development.git;
 in {
-  options.module.core.git = {
+  options.module.applications.development.git = {
     extraPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

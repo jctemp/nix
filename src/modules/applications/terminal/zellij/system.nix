@@ -4,9 +4,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.zellij;
+  cfg = config.module.applications.terminal.zellij;
 in {
-  options.module.core.zellij = {
+  options.module.applications.terminal.zellij = {
     extraPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
       default = [];

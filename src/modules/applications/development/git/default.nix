@@ -11,8 +11,8 @@
       ./home.nix
     ];
 
-  options.module.applications.git = {
-    enable = {
+  options.module.applications.development.git = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable git services and applications";

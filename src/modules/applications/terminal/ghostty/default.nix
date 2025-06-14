@@ -11,8 +11,8 @@
       ./home.nix
     ];
 
-  options.module.applications.ghostty = {
-    enable = {
+  options.module.applications.terminal.ghostty = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable Ghostty terminal emulator";

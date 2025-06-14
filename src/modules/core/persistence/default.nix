@@ -12,7 +12,7 @@
     ];
 
   options.module.core.persistence = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable persistence services and applications";

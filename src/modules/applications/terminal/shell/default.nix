@@ -11,8 +11,8 @@
       ./home.nix
     ];
 
-  options.module.applications.shell = {
-    enable = {
+  options.module.applications.terminal.shell = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable shell configuration";

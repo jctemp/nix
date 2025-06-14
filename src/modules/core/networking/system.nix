@@ -137,8 +137,11 @@ in {
       };
       hostKeys = let
         persistPath =
-          config.modules.system.persistence.persistPath or lib.warn
-          "persistPath is unset; using /persist as default" "/persist";
+          if config.module.core.persistence.persistPath == null
+          then
+            lib.warn
+            "persistPath is unset; using /persist as default" "/persist"
+          else config.module.core.persistence.persistPath;
       in [
         {
           path = "${persistPath}/ssh/ssh_host_ed25519_key";

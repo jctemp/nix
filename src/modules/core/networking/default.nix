@@ -12,7 +12,7 @@
     ];
 
   options.module.core.networking = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable networking services and applications";

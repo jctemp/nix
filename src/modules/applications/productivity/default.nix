@@ -12,7 +12,7 @@
     ];
 
   options.module.applications.productivity = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable productivity applications";

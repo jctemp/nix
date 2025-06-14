@@ -12,7 +12,7 @@
     ];
 
   options.module.core.virtualisation = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable virtualisation services and applications";

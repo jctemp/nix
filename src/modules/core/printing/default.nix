@@ -12,7 +12,7 @@
     ];
 
   options.module.core.printing = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable printing services and applications";

@@ -4,9 +4,9 @@
   lib,
   ...
 }: let
-  cfg = config.module.applications.shell;
+  cfg = config.module.applications.terminal.shell;
 in {
-  options.module.core.shell = {
+  options.module.applications.terminal.shell = {
     defaultShell = lib.mkOption {
       type = lib.types.package;
       default = pkgs.bash;
@@ -22,7 +22,6 @@ in {
     users.defaultUserShell = cfg.defaultShell;
     environment.systemPackages = with pkgs; cfg.extraPackages;
     programs.bash = {
-      enableCompletion = true;
       completion.enable = true;
       shellAliases = {
         # color support

@@ -12,7 +12,7 @@
     ];
 
   options.module.core.locale = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable locale services and applications";

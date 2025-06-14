@@ -12,7 +12,7 @@
     ];
 
   options.module.core.security = {
-    enable = {
+    enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable security services and applications";
