@@ -36,10 +36,7 @@
     };
 
     applications = {
-      development = {
-        enable = true;
-        editor.helix.enable = true;
-      };
+      development.enable = true;
       media.enable = true;
       productivity.enable = true;
       terminal = {

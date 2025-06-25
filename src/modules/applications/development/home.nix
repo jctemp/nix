@@ -1,15 +1,13 @@
-# src/modules/applications/development/home.nix
 {
   config,
   lib,
   pkgs,
+  ctx,
   ...
 }: let
   cfg = config.module.applications.development;
 in {
-  # Home-specific options only
   options.module.applications.development = {
-    # Git user configuration
     git = {
       userName = lib.mkOption {
         type = lib.types.str;
@@ -23,28 +21,13 @@ in {
         description = "Git user email";
       };
 
-      signing = {
-        enable = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = "Enable commit signing";
-        };
-
-        key = lib.mkOption {
-          type = lib.types.str;
-          default = "";
-          description = "GPG signing key";
-        };
-      };
-
-      applications = lib.mkOption {
-        type = lib.types.listOf lib.types.package;
-        default = [];
-        description = "Git GUI applications to install";
+      signingKey = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "GPG signing key";
       };
     };
 
-    # Editor user configuration
     editor = {
       helix = {
         enable = lib.mkOption {
@@ -86,48 +69,29 @@ in {
         };
       };
     };
-
-    # Additional user packages
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra development packages for user";
-    };
   };
 
   config = lib.mkIf cfg.enable {
-    # User development packages
     home.packages =
       [
-        # Enhanced CLI tools
-        pkgs.zoxide # Better cd
-        pkgs.fzf # Fuzzy finder
-
-        # Development utilities
-        pkgs.gh # GitHub CLI
-
-        # System monitoring
-        pkgs.duf # Better df
-        pkgs.ncdu # Disk usage
-
-        # Lightweight editing
-        pkgs.marksman # Markdown LSP (lightweight)
-        pkgs.vale # Prose linter
+        # Lightweight editing support
+        pkgs.aspell # Spell checker
+        pkgs.aspellDicts.en
+        pkgs.aspellDicts.de
       ]
-      ++ cfg.git.applications ++ cfg.extraPackages;
+      ++ cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
-    # Git configuration (user-specific)
     programs.git = {
       enable = true;
       userName = lib.mkIf (cfg.git.userName != "") cfg.git.userName;
       userEmail = lib.mkIf (cfg.git.userEmail != "") cfg.git.userEmail;
-      signing = lib.mkIf cfg.git.signing.enable {
-        key = cfg.git.signing.key;
-        signByDefault = true;
+      signing = {
+        key = cfg.git.signingKey;
+        signByDefault = cfg.git.signingKey != "";
       };
     };
 
-    # GitUI configuration
     programs.gitui = {
       enable = true;
       keyConfig = ''
@@ -143,14 +107,12 @@ in {
       '';
     };
 
-    # Helix configuration
     programs.helix = lib.mkIf cfg.editor.helix.enable {
       enable = true;
       defaultEditor = cfg.editor.helix.defaultEditor;
 
       settings = {
         theme = cfg.editor.helix.theme;
-
         editor = {
           line-number = "absolute";
           true-color = true;
@@ -184,143 +146,23 @@ in {
           };
         };
       };
-
-      # Minimal language configuration - NO LSP servers
-      languages = {
-        language = [
-          {
-            name = "markdown";
-            file-types = ["md" "markdown"];
-            comment-token = "<!--";
-            auto-format = false;
-          }
-          {
-            name = "bash";
-            file-types = ["sh" "bash"];
-            shebangs = ["sh" "bash"];
-            comment-token = "#";
-          }
-          {
-            name = "nix";
-            file-types = ["nix"];
-            comment-token = "#";
-          }
-          {
-            name = "json";
-            file-types = ["json"];
-          }
-          {
-            name = "yaml";
-            file-types = ["yml" "yaml"];
-            comment-token = "#";
-          }
-        ];
-
-        # NO language servers - all come from devshells
-        language-server = {};
-      };
     };
 
-    # VS Code configuration
     programs.vscode = lib.mkIf cfg.editor.vscode.enable {
       enable = true;
       package = cfg.editor.vscode.package;
       profiles.default = {
         userSettings = {
           # Universal VS Code settings only
-          "workbench.colorTheme" = "Ayu Dark Bordered";
           "editor.rulers" = [80 120];
           "editor.minimap.enabled" = false;
           "telemetry.telemetryLevel" = "off";
-
-          # NO language-specific settings
-          # NO formatters, linters, language servers
         };
 
         extensions = with pkgs.vscode-extensions; [
-          # Universal extensions only
-          teabyii.ayu
-          vscodevim.vim # Vim bindings
           ms-vscode-remote.remote-ssh # Remote development
-
-          # NO language-specific extensions
         ];
-        };
       };
-
-    # Shell configuration (user-level enhancements)
-    programs.bash = {
-      enable = true;
-      enableCompletion = true;
-
-      shellAliases = {
-        # Home manager
-        system-rebuild = "sudo nixos-rebuild switch";
-        home-rebuild = "home-manager switch";
-
-        # Markdown shortcuts
-        mdview = "glow";
-        mdlint = "vale";
-      };
-
-      bashrcExtra = ''
-        # Enhanced development environment
-        export HISTSIZE=10000
-        export HISTFILESIZE=20000
-        export HISTCONTROL=ignoreboth:erasedups
-
-        # Development tools
-        ${lib.optionalString cfg.editor.helix.defaultEditor ''export EDITOR="hx"''}
-        ${lib.optionalString cfg.editor.vscode.defaultEditor ''export EDITOR="code"''}
-        export BROWSER="firefox"
-        export NIX_CONFIG="experimental-features = nix-command flakes"
-      '';
-    };
-
-    # Nushell configuration
-    programs.nushell = {
-      enable = true;
-
-      configFile.text = ''
-        $env.config = {
-          show_banner: false
-          edit_mode: vi
-          completions: {
-            case_sensitive: false
-            quick: true
-            partial: true
-          }
-        }
-
-        # Development aliases
-        alias ll = ls -la
-        alias la = ls -la
-        alias gst = git status
-        alias gd = git diff
-        alias gl = git log --oneline -10
-      '';
-
-      envFile.text = ''
-        ${lib.optionalString cfg.editor.helix.defaultEditor ''$env.EDITOR = "hx"''}
-        ${lib.optionalString cfg.editor.vscode.defaultEditor ''$env.EDITOR = "code"''}
-        $env.NIX_CONFIG = "experimental-features = nix-command flakes"
-      '';
-    };
-
-    # Essential development tools
-    programs.direnv = {
-      enable = true;
-      nix-direnv.enable = true;
-      config = {
-        warn_timeout = "1h";
-        load_dotenv = true;
-      };
-    };
-
-    programs.zoxide = {
-      enable = true;
-      enableBashIntegration = true;
-      enableNushellIntegration = true;
     };
 
     programs.fzf = {
@@ -330,7 +172,6 @@ in {
       defaultOptions = ["--height 40%" "--border"];
     };
 
-    # Configuration files
     xdg.configFile = {
       # Global gitignore
       "git/ignore".text = ''
@@ -355,24 +196,6 @@ in {
         *.temp
       '';
 
-      # Vale configuration
-      "vale/vale.ini".text = ''
-        StylesPath = styles
-        MinAlertLevel = suggestion
-
-        [*.{md,txt}]
-        BasedOnStyles = Vale, write-good
-      '';
-
-      # Marksman configuration
-      "marksman/config.toml".text = ''
-        [core]
-        markdown.file_extensions = ["md", "markdown"]
-
-        [completion]
-        wiki.style = "title-slug"
-      '';
-
       # Helix ignore patterns
       "helix/ignore" = lib.mkIf cfg.editor.helix.enable {
         text = ''
@@ -388,12 +211,9 @@ in {
       };
     };
 
-    # Session variables
     home.sessionVariables = {
-      EDITOR = lib.mkIf cfg.editor.helix.defaultEditor "hx";
       PAGER = "less";
       LESS = "-R";
-      NIX_CONFIG = "experimental-features = nix-command flakes";
     };
   };
 }

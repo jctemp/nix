@@ -7,17 +7,14 @@
       virtualisation.enable = true;
       gnome.enable = true;
     };
-    
+
     applications = {
       development = {
         enable = true;
         git = {
           userName = "Jamie Temple";
           userEmail = "jamie.c.temple@gmail.com";
-          signing = {
-            enable = true;
-            key = "6A89175BB28B8B81";
-          };
+          signingKey = "6A89175BB28B8B81";
         };
         editor = {
           helix.enable = true;

@@ -55,7 +55,6 @@ in {
       };
     };
 
-  
     dconf.settings = {
       "org/gnome/desktop/interface" = {
         gtk-theme = cfg.theme.name;

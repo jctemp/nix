@@ -7,6 +7,7 @@
 }: let
   cfg = config.module.applications.terminal.shell;
 in {
+  # TODO: add nushull and make it the primary shell to use
   options.module.applications.terminal.shell = {
     applications = lib.mkOption {
       type = lib.types.listOf lib.types.package;
@@ -23,6 +24,9 @@ in {
     aliases = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = {
+        system-rebuild = "sudo nixos-rebuild switch";
+        home-rebuild = "home-manager switch";
+
         # color support
         ls = "ls --color=auto";
         dir = "dir --color=auto";
@@ -57,7 +61,11 @@ in {
 
     extraConfig = lib.mkOption {
       type = lib.types.lines;
-      default = "";
+      default = ''
+        export HISTSIZE=10000
+        export HISTFILESIZE=20000
+        export HISTCONTROL=ignoreboth:erasedups
+      '';
       description = "Extra shell configuration";
     };
   };
@@ -87,6 +95,16 @@ in {
       enable = true;
       enableBashIntegration = true;
       nix-direnv.enable = true;
+      config = {
+        warn_timeout = "1h";
+        load_dotenv = true;
+      };
+    };
+
+    programs.zoxide = {
+      enable = true;
+      enableBashIntegration = true;
+      enableNushellIntegration = true;
     };
   };
 }
