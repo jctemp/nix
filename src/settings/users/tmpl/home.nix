@@ -36,7 +36,7 @@
         enable = true;
         categories = {
           notes.enable = false;
-          office.enable = false;
+          office.enable = true;
           passwords.enable = true;
           research.enable = false;
         };
