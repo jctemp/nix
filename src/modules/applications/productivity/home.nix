@@ -9,25 +9,25 @@
 in {
   options.module.applications.productivity = {
     categories = {
-      office = lib.mkOption {
+      office.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable office suite applications";
       };
 
-      research = lib.mkOption {
+      research.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable research and reference applications";
       };
 
-      passwords = lib.mkOption {
+      passwords.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable password management applications";
       };
 
-      notes = lib.mkOption {
+      notes.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
         description = "Enable note-taking applications";
@@ -39,16 +39,16 @@ in {
     home.packages =
       cfg.packages
       ++ lib.optionals ctx.gui (
-        lib.optionals cfg.categories.office [
+        lib.optionals cfg.categories.office.enable [
           pkgs.onlyoffice-desktopeditors
         ]
-        ++ lib.optionals cfg.categories.research [
+        ++ lib.optionals cfg.categories.research.enable [
           pkgs.zotero
         ]
-        ++ lib.optionals cfg.categories.passwords [
+        ++ lib.optionals cfg.categories.passwords.enable [
           pkgs.keepassxc
         ]
-        ++ lib.optionals cfg.categories.notes [
+        ++ lib.optionals cfg.categories.notes.enable [
           pkgs.obsidian
         ]
         ++ cfg.packagesWithGUI

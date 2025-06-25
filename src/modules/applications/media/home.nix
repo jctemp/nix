@@ -9,25 +9,25 @@
 in {
   options.module.applications.media = {
     categories = {
-      audio = lib.mkOption {
+      audio.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable audio applications";
       };
 
-      video = lib.mkOption {
+      video.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable video applications";
       };
 
-      graphics = lib.mkOption {
+      graphics.enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
         description = "Enable graphics applications";
       };
 
-      modeling = lib.mkOption {
+      modeling.enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
         description = "Enable 3D modeling applications";
@@ -47,22 +47,21 @@ in {
         [
           pkgs.vlc
         ]
-        ++ lib.optionals cfg.categories.audio [
+        ++ lib.optionals cfg.categories.audio.enable [
           pkgs.spotify
           pkgs.audacity
         ]
-        ++ lib.optionals cfg.categories.video [
+        ++ lib.optionals cfg.categories.video.enable [
           pkgs.obs-studio
         ]
-        ++ lib.optionals cfg.categories.graphics [
+        ++ lib.optionals cfg.categories.graphics.enable [
           pkgs.gimp
         ]
-        ++ lib.optionals cfg.categories.modeling [
+        ++ lib.optionals cfg.categories.modeling.enable [
           pkgs.blender
           pkgs.freecad
         ]
         ++ cfg.packagesWithGUI
       );
   };
-}
 }
