@@ -17,6 +17,8 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+
+    blender-bin.url = "github:edolstra/nix-warez?dir=blender";
   };
 
   outputs = inputs: let

@@ -18,6 +18,7 @@
   pkgs = import inputs.nixpkgs-unstable {
     inherit system;
     config.allowUnfree = true;
+    overlays = [inputs.blender-bin.overlays.default];
   };
 in {
   "${name}" = inputs.home-manager.lib.homeManagerConfiguration {
