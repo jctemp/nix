@@ -5,7 +5,7 @@
 }: let
   hasBluetoothDevice = builtins.length (config.facter.report.hardware.bluetooth or []) > 0;
 in {
-  options.modules.hardware.bluetooth = {
+  options.module.hardware.bluetooth = {
     enable =
       lib.mkEnableOption "Bluetooth support"
       // {
@@ -14,7 +14,7 @@ in {
       };
   };
 
-  config = lib.mkIf config.modules.hardware.bluetooth.enable {
+  config = lib.mkIf config.module.hardware.bluetooth.enable {
     hardware.bluetooth = {
       enable = true;
       powerOnBoot = true;

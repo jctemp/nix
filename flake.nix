@@ -1,5 +1,5 @@
 {
-  description = "Omni Nix Configuration";
+  description = "Uni Nix Configuration";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
@@ -25,7 +25,7 @@
     eachDefaultSystem = eachSystem systems;
   in {
     nixosConfigurations = let
-      utils = import ./src/lib {inherit (inputs) nixpkgs home-manager;};
+      utils = import ./src/utils {inherit inputs;};
     in
       utils.mkMerge [
         (utils.mkSystem {
@@ -35,56 +35,55 @@
           modules = [];
           gui = true;
         })
-        (utils.mkSystem {
-          name = "laptop";
-          system = "x86_64-linux";
-          stateVersion = "24.11";
-          modules = [
-            inputs.nixos-hardware.nixosModules.microsoft-surface-common
-            ({
-              config,
-              lib,
-              ...
-            }: {
-              microsoft-surface.ipts.enable = true;
-              config.microsoft-surface.surface-control.enable = true;
-              users.users =
-                lib.genAttrs
-                (lib.attrNames config.users.users)
-                (_name: {extraGroups = ["surface-control"];});
-            })
-          ];
-          gui = true;
-        })
-        (utils.mkSystem {
-          name = "cloud";
-          system = "x86_64-linux";
-          stateVersion = "25.05";
-          modules = [];
-          gui = false;
-        })
+        # (utils.mkSystem {
+        #   name = "laptop";
+        #   system = "x86_64-linux";
+        #   stateVersion = "24.11";
+        #   modules = [
+        #     inputs.nixos-hardware.nixosModules.microsoft-surface-common
+        #     ({
+        #       config,
+        #       lib,
+        #       ...
+        #     }: {
+        #       microsoft-surface.ipts.enable = true;
+        #       config.microsoft-surface.surface-control.enable = true;
+        #       users.users =
+        #         lib.genAttrs
+        #         (lib.attrNames config.users.users)
+        #         (_name: {extraGroups = ["surface-control"];});
+        #     })
+        #   ];
+        #   gui = true;
+        # })
+        # (utils.mkSystem {
+        #   name = "cloud";
+        #   system = "x86_64-linux";
+        #   stateVersion = "25.05";
+        #   modules = [];
+        #   gui = false;
+        # })
       ];
 
     homeConfigurations = let
-      utils = import ./src/lib {inherit (inputs) nixpkgs home-manager;};
+      utils = import ./src/utils {inherit inputs;};
     in
-      eachDefaultSystem (system:
-        utils.mkMerge [
-          (utils.mkUser {
-            inherit system;
-            name = "mrt";
-            stateVersion = "24.11";
-            modules = [];
-            gui = true;
-          })
-          (utils.mkUser {
-            inherit system;
-            name = "remote";
-            stateVersion = "24.11";
-            modules = [];
-            gui = false;
-          })
-        ]);
+      utils.mkMerge [
+        (utils.mkHome {
+          system = "x86_64-linux";
+          name = "tmpl";
+          stateVersion = "24.11";
+          modules = [];
+          gui = true;
+        })
+        # (utils.mkHome {
+        #   system = "x86_64-linux";
+        #   name = "remote";
+        #   stateVersion = "24.11";
+        #   modules = [];
+        #   gui = false;
+        # })
+      ];
 
     formatter = eachDefaultSystem (system: inputs.nixpkgs.legacyPackages.${system}.alejandra);
     devShells = eachDefaultSystem (system: let

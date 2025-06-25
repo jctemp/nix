@@ -58,23 +58,23 @@ in {
           cfg.browsers.firefox.package
         ]
       );
-  };
 
-  xdg.mimeApps = lib.mkIf ctx.gui {
-    enable = true;
-    defaultApplications = let
-      browserDesktop =
-        if cfg.defaultBrowser == "firefox"
-        then "firefox.desktop"
-        else if cfg.defaultBrowser == "chrome" && cfg.browsers.chrome.package == pkgs.google-chrome
-        then "google-chrome.desktop"
-        else "chromium-browser.desktop";
-    in {
-      "text/html" = browserDesktop;
-      "x-scheme-handler/http" = browserDesktop;
-      "x-scheme-handler/https" = browserDesktop;
-      "x-scheme-handler/about" = browserDesktop;
-      "x-scheme-handler/unknown" = browserDesktop;
+    xdg.mimeApps = lib.mkIf ctx.gui {
+      enable = true;
+      defaultApplications = let
+        browserDesktop =
+          if cfg.defaultBrowser == "firefox"
+          then "firefox.desktop"
+          else if cfg.defaultBrowser == "chrome" && cfg.browsers.chrome.package == pkgs.google-chrome
+          then "google-chrome.desktop"
+          else "chromium-browser.desktop";
+      in {
+        "text/html" = browserDesktop;
+        "x-scheme-handler/http" = browserDesktop;
+        "x-scheme-handler/https" = browserDesktop;
+        "x-scheme-handler/about" = browserDesktop;
+        "x-scheme-handler/unknown" = browserDesktop;
+      };
     };
   };
 }

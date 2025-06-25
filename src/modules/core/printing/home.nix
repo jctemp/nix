@@ -17,13 +17,13 @@ in {
 
   config = lib.mkIf cfg.enable {
     home.packages =
-      lib.mkIf ctx.gui (with pkgs; [
+      lib.optionals ctx.gui (with pkgs; [
         system-config-printer
         evince
       ])
       ++ cfg.applications;
 
-    dconf.settings = lib.mkIf (ctx.gui && config.modules.core.gnome.enable) {
+    dconf.settings = lib.mkIf (ctx.gui && config.module.core.gnome.enable) {
       "org/gnome/desktop/interface" = {
         gtk-print-preview-command = "${pkgs.evince}/bin/evince --preview %s";
       };

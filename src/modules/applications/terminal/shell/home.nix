@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   pkgs,
   lib,
@@ -71,7 +72,7 @@ in {
 
     programs.bash = {
       enable = true;
-      completion.enable = cfg.enableCompletion;
+      inherit (cfg) enableCompletion;
       shellAliases = cfg.aliases;
       bashrcExtra = cfg.extraConfig;
     };
@@ -79,7 +80,7 @@ in {
     programs.starship = lib.mkIf (cfg.prompt == "starship") {
       enable = true;
       enableBashIntegration = true;
-      settings = builtins.fromTOML (builtins.readFile "./starship.toml");
+      settings = builtins.fromTOML (builtins.readFile "${inputs.self}/src/modules/applications/terminal/shell/starship.toml");
     };
 
     programs.direnv = lib.mkIf cfg.enableDirenv {

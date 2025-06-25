@@ -34,6 +34,10 @@ in {
       (with pkgs; [
         gnome-tweaks
         gnome-extension-manager
+
+        gnomeExtensions.forge
+        gnomeExtensions.blur-my-shell
+        gnomeExtensions.dash-to-dock
       ])
       ++ cfg.applications;
 
@@ -51,6 +55,7 @@ in {
       };
     };
 
+  
     dconf.settings = {
       "org/gnome/desktop/interface" = {
         gtk-theme = cfg.theme.name;
@@ -64,6 +69,12 @@ in {
 
       "org/gnome/shell" = {
         disable-user-extensions = false;
+        enabled-extensions = [
+          "user-theme@gnome-shell-extensions.gcampax.github.com"
+          "forge@jmmaranan.com"
+          "dash-to-dock@micxgx.gmail.com"
+          "blur-my-shell@aunetx"
+        ];
       };
     };
 

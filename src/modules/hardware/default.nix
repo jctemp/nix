@@ -1,14 +1,15 @@
-{
-  lib,
-  ctx,
-  ...
-}: {
-  imports = lib.optionals (ctx.current == "system") [
+{ctx, ...}:
+if ctx.current != "system"
+then {}
+else {
+  imports = [
     ./bluetooth.nix
     ./facter.nix
     ./nvidia.nix
   ];
 
-  hardware.enableRedistributableFirmware = true;
-  services.fwupd.enable = true;
+  config = {
+    hardware.enableRedistributableFirmware = true;
+    services.fwupd.enable = true;
+  };
 }

@@ -50,9 +50,8 @@ in {
     i18n = {
       inherit (cfg) defaultLocale;
       supportedLocales = [
-        "${cfg.defaultLocale}/UTF-8"
-        "${cfg.extraLocale}/UTF-8"
-        "en_GB.UTF-8/UTF-8"
+        "${cfg.defaultLocale}"
+        "${cfg.extraLocale}"
       ];
 
       extraLocaleSettings = let

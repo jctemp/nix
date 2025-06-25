@@ -63,7 +63,7 @@ in {
         pkgs.gimp
       ]
       ++ lib.optionals (ctx.gui && cfg.categories.modeling.enable) [
-        pkgs.blender_4_4
+        # pkgs.blender_4_4
         pkgs.freecad
       ];
   };

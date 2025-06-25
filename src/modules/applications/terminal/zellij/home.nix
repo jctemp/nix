@@ -54,7 +54,7 @@ in {
     home.packages = cfg.applications;
     programs.zellij = {
       enable = true;
-      inherit (cfg) enableBashIntegration;
+      enableBashIntegration = cfg.enableShellIntegration;
       settings =
         {
           simplified_ui = cfg.simplifiedUi;

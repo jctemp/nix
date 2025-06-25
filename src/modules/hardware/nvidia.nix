@@ -10,7 +10,7 @@
       (gpu.vendor.hex or "") == "10de"
   ) (config.facter.report.hardware.graphics_card or []);
 in {
-  options.modules.hardware.nvidia = {
+  options.module.hardware.nvidia = {
     enable =
       lib.mkEnableOption "NVIDIA graphics support"
       // {
@@ -19,7 +19,7 @@ in {
       };
   };
 
-  config = lib.mkIf config.modules.hardware.nvidia.enable {
+  config = lib.mkIf config.module.hardware.nvidia.enable {
     nixpkgs.config.allowUnfree = true;
 
     hardware.nvidia = {
@@ -38,5 +38,7 @@ in {
     hardware.graphics.extraPackages = [
       pkgs.nvidia-vaapi-driver
     ];
+
+    # TODO: add configuration to automagically configure DGPU
   };
 }
