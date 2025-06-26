@@ -1,47 +1,53 @@
-{
-  # Enable desktop-specific modules
+{...}: {
+  imports = [./profiles/full.nix];
+  
   module = {
     core = {
       boot = {
-        enable = true;
         loader = "systemd";
-        force = false;
         kernelPackage = "default";
       };
+      
       persistence = {
         enable = true;
         disk = "/dev/nvme0n1";
         persistPath = "/persist";
       };
-      gnome.enable = true;
-      audio.enable = true;
-      printing.enable = true;
-      networking.enable = true;
-      security = {
-        enable = true;
-        yubikey.enable = true;
+      
+      networking = {
+        networkManager.enable = true;
+        tcp.optimize = true;
+        ssh.enable = false;
       };
+      
+      locale = {
+        timeZone = "Europe/Berlin";
+        defaultLocale = "en_US.UTF-8";
+        extraLocale = "de_DE.UTF-8";
+        keyboardLayout = "us";
+      };
+      
+      security = {
+        yubikey.enable = true;
+        fail2ban.enable = false;
+      };
+      
       virtualisation = {
-        enable = true;
-        containers.enable = true;
+        containers = {
+          enable = true;
+          backend = "podman";
+        };
         libvirt.enable = true;
       };
+      
       users = {
-        users = [];
         administrators = ["tmpl"];
+        primaryUser = "tmpl";
       };
     };
 
     applications = {
       development.enable = true;
-      media.enable = true;
-      productivity.enable = true;
-      web.enable = true;
-      terminal = {
-        ghostty.enable = true;
-        shell.enable = true;
-        zellij.enable = true;
-      };
     };
   };
 }

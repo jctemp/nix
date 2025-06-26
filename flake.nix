@@ -37,34 +37,22 @@
           modules = [];
           gui = true;
         })
-        # (utils.mkSystem {
-        #   name = "laptop";
-        #   system = "x86_64-linux";
-        #   stateVersion = "24.11";
-        #   modules = [
-        #     inputs.nixos-hardware.nixosModules.microsoft-surface-common
-        #     ({
-        #       config,
-        #       lib,
-        #       ...
-        #     }: {
-        #       microsoft-surface.ipts.enable = true;
-        #       config.microsoft-surface.surface-control.enable = true;
-        #       users.users =
-        #         lib.genAttrs
-        #         (lib.attrNames config.users.users)
-        #         (_name: {extraGroups = ["surface-control"];});
-        #     })
-        #   ];
-        #   gui = true;
-        # })
-        # (utils.mkSystem {
-        #   name = "cloud";
-        #   system = "x86_64-linux";
-        #   stateVersion = "25.05";
-        #   modules = [];
-        #   gui = false;
-        # })
+        (utils.mkSystem {
+          name = "laptop";
+          system = "x86_64-linux";
+          stateVersion = "24.11";
+          modules = [
+            inputs.nixos-hardware.nixosModules.microsoft-surface-common
+          ];
+          gui = true;
+        })
+        (utils.mkSystem {
+          name = "contabo";
+          system = "x86_64-linux";
+          stateVersion = "25.05";
+          modules = [];
+          gui = false;
+        })
       ];
 
     homeConfigurations = let

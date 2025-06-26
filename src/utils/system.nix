@@ -11,13 +11,6 @@
 }: let
   lib = inputs.nixpkgs.lib;
 
-  # Import host-specific settings if they exist
-  hostSettingsPath = root + "/settings/hosts/${name}.nix";
-  hostSettings =
-    if builtins.pathExists hostSettingsPath
-    then import hostSettingsPath
-    else {};
-
   userModules = let
     paths = builtins.readDir (root + "/settings/users");
     users = lib.mapAttrsToList (name: type:
@@ -57,7 +50,7 @@ in {
         (root + "/modules")
 
         # Host-specific settings
-        hostSettings
+        (root + "/settings/hosts/${name}.nix")
 
         # Third party modules
         inputs.disko.nixosModules.disko

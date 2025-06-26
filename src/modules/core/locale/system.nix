@@ -52,10 +52,6 @@ in {
 
     i18n = {
       inherit (cfg) defaultLocale;
-      supportedLocales = [
-        "${cfg.defaultLocale}"
-        "${cfg.extraLocale}"
-      ];
 
       extraLocaleSettings = let
         inherit (cfg) extraLocale;

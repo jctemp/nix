@@ -4,7 +4,6 @@
   lib,
   ...
 }: let
-  # Check if NVIDIA GPU is available (vendor hex "10de" = NVIDIA)
   hasNvidiaGpu = builtins.any (
     gpu:
       (gpu.vendor.hex or "") == "10de"

@@ -60,6 +60,7 @@ in {
             configurationLimit = 5;
             zfsSupport = true;
             forceInstall = cfg.force;
+            device = config.module.core.persistence.disk;
           };
         })
       ];

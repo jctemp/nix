@@ -21,7 +21,6 @@
 
   boot.tmp.cleanOnBoot = true;
   boot.kernelModules = ["tcp_bbr"];
-  system.stateVersion = "24.11";
   system.rebuild.enableNg = true;
 
   environment.systemPackages = lib.flatten [
