@@ -87,6 +87,8 @@ in {
             "networkmanager"
             "scanner"
             "lp"
+            "kvm"
+            "surface-control"
           ]);
       }
     );

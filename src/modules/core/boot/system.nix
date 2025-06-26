@@ -2,26 +2,24 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.boot;
 in {
   options.module.core.boot = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
     loader = lib.mkOption {
       type = lib.types.enum ["systemd" "grub"];
       default = "systemd";
       description = "Boot loader type";
     };
+
     force = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Option for GRUB to forcefully install into environment";
     };
+
     kernelPackage = lib.mkOption {
       type = lib.types.enum ["default" "zen" "hardened" "extern"];
       default = "default";
@@ -30,7 +28,10 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = cfg.extraPackages;
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
+
     boot = {
       kernelPackages = lib.mkDefault (
         if cfg.kernelPackage == "default"

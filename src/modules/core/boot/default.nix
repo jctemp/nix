@@ -4,18 +4,26 @@
   ...
 }: {
   imports =
-    lib.optionals (ctx.current == "system") [
-      ./system.nix
-    ]
-    ++ lib.optionals (ctx.current == "home") [
-      ./home.nix
-    ];
+    lib.optionals (ctx.current == "system") [./system.nix]
+    ++ lib.optionals (ctx.current == "home") [./home.nix];
 
   options.module.core.boot = {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
       description = "Enable boot services and applications";
+    };
+
+    packages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [];
+      description = "Additional boot packages";
+    };
+
+    packagesWithGUI = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [];
+      description = "Additional boot packages with GUI";
     };
   };
 }
