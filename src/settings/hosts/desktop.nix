@@ -39,12 +39,12 @@
       development.enable = true;
       media.enable = true;
       productivity.enable = true;
+      web.enable = true;
       terminal = {
         ghostty.enable = true;
         shell.enable = true;
         zellij.enable = true;
       };
-      web.enable = true;
     };
   };
 }

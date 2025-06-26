@@ -153,14 +153,14 @@ in {
       package = cfg.editor.vscode.package;
       profiles.default = {
         userSettings = {
-          # Universal VS Code settings only
           "editor.rulers" = [80 120];
           "editor.minimap.enabled" = false;
           "telemetry.telemetryLevel" = "off";
+          "workbench.sideBar.location" = "right";
         };
 
         extensions = with pkgs.vscode-extensions; [
-          ms-vscode-remote.remote-ssh # Remote development
+          ms-vscode-remote.remote-ssh
         ];
       };
     };

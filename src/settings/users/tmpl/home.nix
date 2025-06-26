@@ -42,6 +42,15 @@
         };
       };
 
+      web = {
+        enable = true;
+        browsers = {
+          chrome.enable = true;
+          firefox.enable = true;
+        };
+        defaultBrowser = "chrome";
+      };
+
       terminal = {
         ghostty = {
           enable = true;
@@ -61,11 +70,7 @@
         };
       };
 
-      web = {
-        enable = true;
-        browsers.chrome.enable = true;
-        defaultBrowser = "chrome";
-      };
+
     };
   };
 }
