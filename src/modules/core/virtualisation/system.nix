@@ -2,28 +2,17 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.virtualisation;
 in {
-  options.module.core.virtualisation = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
-    libvirt.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Enable libvirt for VM management";
-    };
-  };
-
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
-        environment.systemPackages = cfg.extraPackages;
+        environment.systemPackages = 
+          cfg.packages
+          ++ lib.optionals ctx.gui cfg.packagesWithGUI;
       }
 
       (lib.mkIf cfg.containers.enable {
@@ -54,15 +43,24 @@ in {
           ];
       })
 
-      # libvirt for VMs
       (lib.mkIf cfg.libvirt.enable {
-        virtualisation.libvirtd.enable = true;
+        virtualisation.spiceUSBRedirection.enable = true;
+
+        virtualisation.libvirtd = {
+          enable = true;
+          qemu = {
+            swtpm.enable = true;
+            ovmf.packages = [ pkgs.OVMFFull.fd ];
+          };
+        };
         programs.virt-manager.enable = true;
 
         environment.systemPackages = with pkgs; [
-          virt-manager
+          dnsmasq
           libguestfs
+          phodav
           spice-gtk
+          virt-manager
           win-virtio
         ];
       })
