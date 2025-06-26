@@ -7,21 +7,14 @@
 }: let
   cfg = config.module.core.printing;
 in {
-  options.module.core.printing = {
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "printing applications to install for user";
-    };
-  };
-
   config = lib.mkIf cfg.enable {
     home.packages =
-      lib.optionals ctx.gui (with pkgs; [
-        system-config-printer
-        evince
-      ])
-      ++ cfg.applications;
+      lib.optionals ctx.gui [
+        pkgs.system-config-printer
+        pkgs.evince
+      ]
+      ++ cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     dconf.settings = lib.mkIf (ctx.gui && config.module.core.gnome.enable) {
       "org/gnome/desktop/interface" = {

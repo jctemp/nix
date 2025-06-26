@@ -2,17 +2,12 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.printing;
 in {
   options.module.core.printing = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     networkDiscovery.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -27,7 +22,9 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = cfg.extraPackages;
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     services.printing = {
       enable = true;
