@@ -1,17 +1,12 @@
 {
   config,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.locale;
 in {
   options.module.core.locale = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     timeZone = lib.mkOption {
       type = lib.types.str;
       default = "Europe/Berlin";
@@ -30,15 +25,23 @@ in {
       description = "Additional locale for specific formats";
     };
 
+    keyboardLayout = lib.mkOption {
+      type = lib.types.str;
+      default = "us";
+      description = "Console keyboard layout";
+    };
+
     useHardwareClockInLocalTime = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Use local time for hardware clock (useful for dual-boot with Windows)";
+      description = "Use local time for hardware clock";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = cfg.extraPackages;
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     time = {
       inherit (cfg) timeZone;
