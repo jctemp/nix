@@ -1,17 +1,12 @@
 {
   config,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.persistence;
 in {
   options.module.core.persistence = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     disk = lib.mkOption {
       type = lib.types.str;
       default = "/dev/sda";
@@ -46,7 +41,9 @@ in {
     '';
   in
     lib.mkIf cfg.enable {
-      environment.systemPackages = cfg.extraPackages;
+      environment.systemPackages = 
+        cfg.packages
+        ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
       boot.initrd.postDeviceCommands = lib.mkAfter zfsRollbackCommand;
 
@@ -80,12 +77,12 @@ in {
               boot = {
                 label = "BOOT";
                 size = "1M";
-                type = "EF02"; # BIOS BOOT
+                type = "EF02";
               };
               esp = {
                 label = "EFI";
                 size = "2G";
-                type = "EF00"; # ESP
+                type = "EF00";
                 content = {
                   type = "filesystem";
                   format = "vfat";
