@@ -1,17 +1,12 @@
 {
   config,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.audio;
 in {
   options.module.core.audio = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra audio packages to install system-wide";
-    };
-
     jack.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -31,6 +26,9 @@ in {
       pulse.enable = true;
       jack.enable = cfg.jack.enable;
     };
-    environment.systemPackages = cfg.extraPackages;
+    
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
   };
 }

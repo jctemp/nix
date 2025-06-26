@@ -69,8 +69,6 @@
           simplifiedUi = true;
         };
       };
-
-
     };
   };
 }

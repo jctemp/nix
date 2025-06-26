@@ -13,28 +13,23 @@ in {
       default = 30;
       description = "Default audio volume (0-100)";
     };
-
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Audio applications to install for user";
-    };
   };
 
   config = lib.mkIf cfg.enable {
     nixpkgs.config.allowUnfree = true;
 
-    home.packages = with pkgs;
+    home.packages =
       [
-        alsa-utils
-        pulsemixer
+        pkgs.alsa-utils
+        pkgs.pulsemixer
       ]
       ++ lib.optionals ctx.gui [
-        pavucontrol
-        easyeffects
-        helvum
+        pkgs.pavucontrol
+        pkgs.easyeffects
+        pkgs.helvum
       ]
-      ++ cfg.applications;
+      ++ cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     systemd.user.services.set-default-volume = {
       Unit = {
