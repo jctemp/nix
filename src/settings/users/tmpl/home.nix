@@ -3,6 +3,7 @@
   module = {
     core = {
       audio.enable = true;
+      networking.enable = true;
       printing.enable = true;
       virtualisation.enable = true;
       gnome.enable = true;

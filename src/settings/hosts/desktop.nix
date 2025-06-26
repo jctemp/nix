@@ -16,10 +16,7 @@
       gnome.enable = true;
       audio.enable = true;
       printing.enable = true;
-      networking = {
-        enable = true;
-        networkManager.enable = true;
-      };
+      networking.enable = true;
       security = {
         enable = true;
         yubikey.enable = true;

@@ -8,12 +8,6 @@
   cfg = config.module.core.networking;
 in {
   options.module.core.networking = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     tcp.optimize = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -22,7 +16,7 @@ in {
 
     networkManager.enable = lib.mkOption {
       type = lib.types.bool;
-      default = ctx.gui; # Default to GUI context preference
+      default = true;
       description = "Use NetworkManager instead of systemd-networkd";
     };
 
@@ -35,7 +29,7 @@ in {
     ssh = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = !ctx.gui; # Default enabled for headless
+        default = !ctx.gui;
         description = "Enable SSH daemon";
       };
 
@@ -65,29 +59,26 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = with pkgs;
+    environment.systemPackages =
       [
-        dnsutils
-        inetutils
-        mtr
-        tcpdump
+        pkgs.dnsutils
+        pkgs.inetutils
+        pkgs.mtr
+        pkgs.tcpdump
       ]
-      ++ lib.optionals
-      cfg.wireless.enable [
-        wirelesstools
-        iw
+      ++ lib.optionals cfg.wireless.enable [
+        pkgs.wirelesstools
+        pkgs.iw
       ]
-      ++ cfg.extraPackages;
+      ++ cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     networking = {
       networkmanager.enable = cfg.networkManager.enable;
       useNetworkd = !cfg.networkManager.enable;
-
       wireless.enable = cfg.wireless.enable && !cfg.networkManager.enable;
-      # TODO: make this configurable + proxy options
-      nameservers = ["1.1.1.1" "8.8.8.8"];
+      nameservers = ["1.1.1.1" "8.8.8.8"]; # TODO: custom dns remains
 
-      # Firewall
       firewall = {
         enable = true;
         allowedTCPPorts = cfg.firewall.extraTcpPorts;
@@ -96,36 +87,27 @@ in {
       nftables.enable = true;
     };
 
-    # DNS resolution (when using NetworkManager)
     services.resolved = lib.mkIf cfg.networkManager.enable {
       enable = true;
       dnssec = "allow-downgrade";
       domains = ["~."];
-      # TODO: update DNS if configurable
-      fallbackDns = ["1.1.1.1" "9.9.9.9"];
+      fallbackDns = ["1.1.1.1" "9.9.9.9"]; # TODO: custom dns remains
     };
 
     boot.kernel.sysctl = lib.mkIf cfg.tcp.optimize {
-      # TCP Fast Open
       "net.ipv4.tcp_fastopen" = 3;
-      # Increase connection tracking table size
       "net.netfilter.nf_conntrack_max" = 131072;
-      # Increase the maximum receive/transmit buffers
       "net.core.rmem_max" = 16777216;
       "net.core.wmem_max" = 16777216;
-      # Increase TCP buffer limits
       "net.ipv4.tcp_rmem" = "4096 87380 16777216";
       "net.ipv4.tcp_wmem" = "4096 65536 16777216";
-      # Enable BBR congestion control
       "net.core.default_qdisc" = "fq";
       "net.ipv4.tcp_congestion_control" = "bbr";
-      # Protect against SYN flood attacks
       "net.ipv4.tcp_syncookies" = 1;
-      # Reuse sockets in TIME_WAIT state
       "net.ipv4.tcp_tw_reuse" = 1;
     };
 
-    services.openssh = {
+    services.openssh = lib.mkIf cfg.ssh.enable {
       enable = true;
       openFirewall = true;
       inherit (cfg.ssh) banner;
@@ -138,9 +120,7 @@ in {
       hostKeys = let
         persistPath =
           if config.module.core.persistence.persistPath == null
-          then
-            lib.warn
-            "persistPath is unset; using /persist as default" "/persist"
+          then "/persist"
           else config.module.core.persistence.persistPath;
       in [
         {
