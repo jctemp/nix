@@ -8,12 +8,6 @@
   cfg = config.module.core.gnome;
 in {
   options.module.core.gnome = {
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "GNOME applications to install for user";
-    };
-
     theme = {
       name = lib.mkOption {
         type = lib.types.str;
@@ -31,15 +25,15 @@ in {
 
   config = lib.mkIf (cfg.enable && ctx.gui) {
     home.packages =
-      (with pkgs; [
-        gnome-tweaks
-        gnome-extension-manager
-
-        gnomeExtensions.forge
-        gnomeExtensions.blur-my-shell
-        gnomeExtensions.dash-to-dock
-      ])
-      ++ cfg.applications;
+      [
+        pkgs.gnome-tweaks
+        pkgs.gnome-extension-manager
+        pkgs.gnomeExtensions.forge
+        pkgs.gnomeExtensions.blur-my-shell
+        pkgs.gnomeExtensions.dash-to-dock
+      ]
+      ++ cfg.packages
+      ++ cfg.packagesWithGUI;
 
     gtk = {
       enable = true;

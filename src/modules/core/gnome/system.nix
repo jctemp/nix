@@ -8,12 +8,6 @@
   cfg = config.module.core.gnome;
 in {
   options.module.core.gnome = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     wayland.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -28,13 +22,14 @@ in {
   };
 
   config = lib.mkIf (cfg.enable && ctx.gui) {
-    environment.systemPackages = with pkgs;
+    environment.systemPackages =
       [
-        xorg.xinit
-        xorg.xauth
-        xterm
+        pkgs.xorg.xinit
+        pkgs.xorg.xauth
+        pkgs.xterm
       ]
-      ++ cfg.extraPackages;
+      ++ cfg.packages
+      ++ cfg.packagesWithGUI;
 
     services.xserver = {
       enable = true;
