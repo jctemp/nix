@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.applications.terminal.shell;
@@ -12,15 +13,15 @@ in {
       default = pkgs.bash;
       description = "Default system shell";
     };
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra shell packages to install system-wide";
-    };
   };
+
   config = lib.mkIf cfg.enable {
     users.defaultUserShell = cfg.defaultShell;
-    environment.systemPackages = with pkgs; cfg.extraPackages;
+    
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
+
     programs.bash = {
       completion.enable = true;
       shellAliases = {
@@ -39,7 +40,6 @@ in {
         less = "less -i";
         mkdir = "mkdir -pv";
         ping = "ping -c 3";
-        # feh = "feh --scale-down --auto-zoom";
         ".." = "cd ..";
       };
     };

@@ -1,17 +1,12 @@
 {
   config,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.applications.terminal.ghostty;
 in {
   options.module.applications.terminal.ghostty = {
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Ghostty applications to install for user";
-    };
-
     theme = lib.mkOption {
       type = lib.types.str;
       default = "ayu";
@@ -50,7 +45,10 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = cfg.applications;
+    home.packages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
+
     programs.ghostty = {
       enable = true;
       enableBashIntegration = cfg.enableShellIntegration;

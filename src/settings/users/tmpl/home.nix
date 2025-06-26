@@ -61,7 +61,7 @@
         shell = {
           enable = true;
           prompt = "starship";
-          enableDirenv = true;
+          direnv.enable = true;
         };
         zellij = {
           enable = true;

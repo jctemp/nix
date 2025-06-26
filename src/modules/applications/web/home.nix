@@ -33,10 +33,10 @@ in {
     home.packages =
       cfg.packages
       ++ lib.optionals ctx.gui (
-        lib.optionals cfg.browsers.chrome [
+        lib.optionals cfg.browsers.chrome.enable [
           pkgs.google-chrome
         ]
-        ++ lib.optionals cfg.browsers.firefox [
+        ++ lib.optionals cfg.browsers.firefox.enable [
           pkgs.firefox
         ]
         ++ cfg.packagesWithGUI

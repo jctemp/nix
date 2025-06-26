@@ -3,18 +3,12 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.applications.terminal.shell;
 in {
-  # TODO: add nushull and make it the primary shell to use
   options.module.applications.terminal.shell = {
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Shell applications to install for user";
-    };
-
     prompt = lib.mkOption {
       type = lib.types.enum ["starship" "basic"];
       default = "starship";
@@ -47,13 +41,13 @@ in {
       description = "Shell aliases";
     };
 
-    enableCompletion = lib.mkOption {
+    completion.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
       description = "Enable shell completion";
     };
 
-    enableDirenv = lib.mkOption {
+    direnv.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
       description = "Enable direnv for development environments";
@@ -70,28 +64,42 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    home.packages = with pkgs;
+  config = let 
+    starshipToml = "${inputs.self}/src/modules/applications/terminal/shell/starship.toml";
+  in lib.mkIf cfg.enable {
+    home.packages = 
       [
-        bat
-        ripgrep
+        pkgs.bat
+        pkgs.ripgrep
+        pkgs.eza
+        pkgs.fd
+        pkgs.zoxide
+        pkgs.fzf
       ]
-      ++ cfg.applications;
+      ++ cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
     programs.bash = {
       enable = true;
-      inherit (cfg) enableCompletion;
+      enableCompletion = cfg.completion.enable;
       shellAliases = cfg.aliases;
       bashrcExtra = cfg.extraConfig;
+    };
+
+    programs.nushell = {
+      enable = true;
+      shellAliases = cfg.aliases;
+      # TODO: add more configurations options for nushell and make it optionally
+      # a default shell for a user
     };
 
     programs.starship = lib.mkIf (cfg.prompt == "starship") {
       enable = true;
       enableBashIntegration = true;
-      settings = builtins.fromTOML (builtins.readFile "${inputs.self}/src/modules/applications/terminal/shell/starship.toml");
+      settings = builtins.fromTOML (builtins.readFile starshipToml);
     };
 
-    programs.direnv = lib.mkIf cfg.enableDirenv {
+    programs.direnv = lib.mkIf cfg.direnv.enable {
       enable = true;
       enableBashIntegration = true;
       nix-direnv.enable = true;
@@ -105,6 +113,13 @@ in {
       enable = true;
       enableBashIntegration = true;
       enableNushellIntegration = true;
+    };
+
+    programs.fzf = {
+      enable = true;
+      enableBashIntegration = true;
+      defaultCommand = "fd --type f --hidden --follow --exclude .git";
+      defaultOptions = ["--height 40%" "--border"];
     };
   };
 }
