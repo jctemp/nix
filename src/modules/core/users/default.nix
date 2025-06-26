@@ -4,48 +4,26 @@
   ...
 }: {
   imports =
-    lib.optionals (ctx.current == "system") [
-      ./system.nix
-    ]
-    ++ lib.optionals (ctx.current == "home") [
-      ./home.nix
-    ];
+    lib.optionals (ctx.current == "system") [./system.nix]
+    ++ lib.optionals (ctx.current == "home") [./home.nix];
 
   options.module.core.users = {
-    primaryUser = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      description = "Primary user for this host (if none first administrator is used)";
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable user management";
     };
 
-    users = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+    packages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
       default = [];
-      description = "List of users to enable on this host";
+      description = "Additional user packages";
     };
 
-    administrators = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+    packagesWithGUI = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
       default = [];
-      description = "List of users to add to the wheel group";
-    };
-
-    collection = lib.mkOption {
-      description = "The collection of available users to systems";
-      default = {};
-      type = lib.types.attrsOf (lib.types.submodule {
-        options = {
-          hashedPassword = lib.mkOption {
-            type = lib.types.str;
-            description = "Hashed password";
-          };
-          keys = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [];
-            description = "SSH public keys";
-          };
-        };
-      });
+      description = "Additional user packages with GUI";
     };
   };
 }

@@ -1,22 +1,56 @@
 {
   config,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.users;
 in {
   options.module.core.users = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
+    primaryUser = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "Primary user for this host. If none, first admin is default.";
+    };
+
+    users = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
       default = [];
-      description = "Extra packages to install system-wide";
+      description = "List of users to enable on this host";
+    };
+
+    administrators = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "List of users to add to the wheel group";
+    };
+
+    collection = lib.mkOption {
+      description = "The collection of available users. Will be automatically populated";
+      default = {};
+      type = lib.types.attrsOf (lib.types.submodule {
+        options = {
+          hashedPassword = lib.mkOption {
+            type = lib.types.str;
+            description = "Hashed password";
+          };
+          keys = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = "SSH public keys";
+          };
+        };
+      });
     };
   };
 
-  config = let
+  config = lib.mkIf cfg.enable (let
     checkGroups = groups: builtins.filter (group: builtins.hasAttr group config.users.groups) groups;
   in {
-    environment.systemPackages = cfg.extraPackages;
+    environment.systemPackages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
+
     systemd.tmpfiles.rules = lib.foldl (acc: elem: let
       u = config.users.users.${elem}.name;
       g = config.users.users.${elem}.group;
@@ -31,9 +65,8 @@ in {
       name: let
         user =
           lib.throwIfNot (lib.hasAttr name cfg.collection) ''
-            The user '${name}' is not defined in $root/src/settings/users.
-            Please add a definiton for the user you have specified in the
-            host configuration or check for corresponding typos.
+            The user '${name}' is not defined in user collection.
+            Please add a definition for the user.
           ''
           name;
       in {
@@ -42,23 +75,16 @@ in {
         isNormalUser = true;
         extraGroups =
           (lib.optionals (lib.any (u: u == user) cfg.administrators) [
-            "wheel" # Enable sudo
+            "wheel"
           ])
           ++ (checkGroups [
-            # Hardware access groups
             "audio"
             "video"
-
-            # Virtualization groups
             "docker"
             "podman"
             "libvirt"
-
-            # Special purpose groups
             "git"
             "networkmanager"
-
-            # Printing and scanning
             "scanner"
             "lp"
           ]);
@@ -69,5 +95,5 @@ in {
       Defaults        timestamp_timeout=15
     '';
     security.sudo.wheelNeedsPassword = true;
-  };
+  });
 }

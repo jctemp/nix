@@ -1,20 +1,14 @@
 {
   config,
-  pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.users;
 in {
-  options.module.core.users = {
-    applications = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "users applications to install for user";
-    };
-  };
-
-  config = {
-    home.packages = cfg.applications;
+  config = lib.mkIf cfg.enable {
+    home.packages = 
+      cfg.packages
+      ++ lib.optionals ctx.gui cfg.packagesWithGUI;
   };
 }
