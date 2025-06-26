@@ -2,17 +2,12 @@
   config,
   pkgs,
   lib,
+  ctx,
   ...
 }: let
   cfg = config.module.core.security;
 in {
   options.module.core.security = {
-    extraPackages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Extra packages to install system-wide";
-    };
-
     yubikey.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -42,16 +37,15 @@ in {
 
   config = lib.mkIf cfg.enable (lib.mkMerge [
     {
-      # Basic security packages
-      environment.systemPackages = with pkgs;
+      environment.systemPackages =
         [
-          gnupg
-          gpgme
-          libfido2
+          pkgs.gnupg
+          pkgs.gpgme
+          pkgs.libfido2
         ]
-        ++ cfg.extraPackages;
+        ++ cfg.packages
+        ++ lib.optionals ctx.gui cfg.packagesWithGUI;
 
-      # GPG agent configuration
       programs.gnupg.agent = {
         enable = true;
         pinentryPackage = pkgs.pinentry-curses;
@@ -63,11 +57,9 @@ in {
         };
       };
 
-      # FUSE for user mounts
       programs.fuse.userAllowOther = true;
     }
 
-    # YubiKey support
     (lib.mkIf cfg.yubikey.enable {
       environment.systemPackages = with pkgs; [
         yubioath-flutter
@@ -81,14 +73,12 @@ in {
 
       programs.yubikey-touch-detector.enable = true;
       programs.ssh.startAgent = lib.mkForce false;
-
       services.pcscd.enable = true;
       services.udev = {
         enable = true;
         packages = [pkgs.yubikey-personalization];
       };
 
-      # YubiKey shell initialization
       environment = {
         shellInit = ''
           export GPG_TTY="$(tty)"
@@ -105,7 +95,6 @@ in {
       };
     })
 
-    # fail2ban configuration
     (lib.mkIf cfg.fail2ban.enable {
       services.fail2ban = {
         enable = true;
