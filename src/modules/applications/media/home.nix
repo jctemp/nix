@@ -58,7 +58,7 @@ in {
           pkgs.gimp
         ]
         ++ lib.optionals cfg.categories.modeling.enable [
-          pkgs.blender
+          pkgs.blender_4_4
           pkgs.freecad
         ]
         ++ cfg.packagesWithGUI
